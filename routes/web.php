@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\ClientImportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RecurringScheduleController;
 use App\Http\Controllers\Admin\ScheduleBoardController;
@@ -59,6 +60,11 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post('/staff/{staff}/lock', [StaffController::class, 'lock'])->name('staff.lock');
             Route::post('/staff/{staff}/unlock', [StaffController::class, 'unlock'])->name('staff.unlock');
 
+            Route::get('/clients/import', [ClientImportController::class, 'create'])->name('clients.import');
+            Route::post('/clients/import', [ClientImportController::class, 'upload'])->name('clients.import.upload');
+            Route::get('/clients/import/preview', [ClientImportController::class, 'preview'])->name('clients.import.preview');
+            Route::post('/clients/import/confirm', [ClientImportController::class, 'confirm'])->name('clients.import.confirm');
+            Route::post('/clients/import/cancel', [ClientImportController::class, 'cancel'])->name('clients.import.cancel');
             Route::resource('clients', ClientController::class)->except('destroy');
             Route::get('/clients/{client}/schedules/create', [RecurringScheduleController::class, 'create'])->name('schedules.create');
             Route::post('/clients/{client}/schedules', [RecurringScheduleController::class, 'store'])->name('schedules.store');

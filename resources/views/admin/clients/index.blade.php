@@ -1,5 +1,6 @@
 <x-layouts.admin :title="__('clients.title')">
     <x-slot:actions>
+        <a href="{{ route('admin.clients.import') }}" class="btn-secondary btn-sm hidden sm:inline-flex">⇪ {{ __('import.link') }}</a>
         <a href="{{ route('admin.clients.create') }}" class="btn-primary btn-sm hidden sm:inline-flex">+ {{ __('clients.add') }}</a>
     </x-slot:actions>
 
