@@ -212,5 +212,6 @@ Development-only files (tests, docs, `node_modules`) are never uploaded.
 | `.env is missing on the server` | Complete step 5. |
 | `tar: command not found` | Very rare on cPanel. Ask the host to enable it for the account's shell (jailshell). |
 | 500 error after deploy | Read the log: `tail -n 40 ~/apqcleaner/storage/logs/laravel-*.log`. **No Laravel log at all** means PHP failed before Laravel started: check the domain is on **PHP 8.4** in MultiPHP Manager (a "Composer detected issues in your platform" message means the wrong version) and look at `~/apqcleaner/public/error_log` or cPanel → Errors. |
+| **503** "Service Unavailable" for about a minute | A deploy is running (maintenance mode). The page refreshes itself every 15 s. If it lasts longer than a few minutes, run `artisan up` (with your PHP path) in `~/apqcleaner`. A plain host error page instead of the APQ-styled one means the hosting account hit its resource limits: see cPanel → **Resource Usage**. |
 | 500 after running `key:generate` by hand | The old config is cached. Run `artisan optimize` (with your PHP path) or re-run the deploy. |
 | Old styles or JS showing | Hard-refresh. Asset file names change on every build, so this clears itself. |

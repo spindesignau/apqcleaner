@@ -57,7 +57,7 @@ class ImportStaffFromPlanner extends Command
                         'role' => Role::Staff,
                         'employment_type' => EmploymentType::Casual,
                         'hourly_rate' => $p['rate'],
-                        'locale' => 'es',
+                        'locale' => 'en',
                         'must_change_password' => true,
                         'is_active' => true,
                     ])->save();

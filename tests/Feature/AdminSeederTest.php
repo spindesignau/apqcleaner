@@ -23,6 +23,15 @@ class AdminSeederTest extends TestCase
         $this->assertSame('es', $admin->locale);
     }
 
+    public function test_admin_defaults_to_english(): void
+    {
+        config(['apq.admin' => ['email' => 'owner@example.com', 'name' => 'Owner', 'password' => 'Secret12345', 'locale' => null]]);
+
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertSame('en', User::where('email', 'owner@example.com')->sole()->locale);
+    }
+
     public function test_seeder_is_idempotent(): void
     {
         config(['apq.admin' => ['email' => 'owner@example.com', 'name' => 'Owner Example', 'password' => 'Secret12345', 'locale' => 'en']]);

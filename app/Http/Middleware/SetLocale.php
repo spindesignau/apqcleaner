@@ -8,7 +8,8 @@ use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Locale priority: signed-in user → session → `locale` cookie → Accept-Language → app default.
+ * Locale priority: signed-in user → session → `locale` cookie → English (APP_LOCALE).
+ * The browser's language is deliberately ignored: English is the default and Spanish is chosen with the EN/ES pill.
  */
 class SetLocale
 {
@@ -20,7 +21,6 @@ class SetLocale
             $request->user()?->locale,
             $request->hasSession() ? $request->session()->get('locale') : null,
             $request->cookie('locale'),
-            $request->getPreferredLanguage($supported),
         ])->first(fn ($l) => in_array($l, $supported, true)) ?? config('app.locale');
 
         app()->setLocale($locale);

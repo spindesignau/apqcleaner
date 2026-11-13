@@ -23,7 +23,7 @@ return [
         'email' => env('APQ_ADMIN_EMAIL'),
         'name' => env('APQ_ADMIN_NAME', 'Adriana Palacio'),
         'password' => env('APQ_ADMIN_PASSWORD'),
-        'locale' => env('APQ_ADMIN_LOCALE', 'es'),
+        'locale' => env('APQ_ADMIN_LOCALE', 'en'),
     ],
 
     'avatars' => [

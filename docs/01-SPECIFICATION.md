@@ -220,7 +220,7 @@ Details are in [03-XERO-INTEGRATION.md](03-XERO-INTEGRATION.md).
 ### 4.9 Language switching
 
 - An **EN / ES** pill sits in the top header on every page, including login.
-- Before login, the choice is saved in a `locale` cookie (1 year). After login it is saved in `users.locale`. The `SetLocale` middleware uses: user → session → cookie → `Accept-Language` → `en`.
+- **English is the default.** Before login, the choice is saved in a `locale` cookie (1 year). After login it is saved in `users.locale`. The `SetLocale` middleware uses: user → session → cookie → `en`. The browser's language is ignored, so Spanish is only ever an explicit choice.
 - All UI strings, validation messages, emails and staff SMS use `lang/en/*.php`, `lang/es/*.php` and `lang/{en,es}.json`. Client SMS use `clients.preferred_language`.
 - Dates are localised with Carbon `locale()` (`martes 4 de noviembre`).
 

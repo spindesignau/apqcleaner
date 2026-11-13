@@ -27,6 +27,15 @@ class AuthenticationTest extends TestCase
             ->assertSee('lang="es"', false);
     }
 
+    public function test_english_is_the_default_even_for_a_spanish_browser(): void
+    {
+        $this->withHeader('Accept-Language', 'es-ES,es;q=0.9')
+            ->get('/login')
+            ->assertOk()
+            ->assertSee('Welcome back')
+            ->assertSee('lang="en"', false);
+    }
+
     public function test_staff_signs_in_and_lands_on_today(): void
     {
         $user = User::factory()->create();

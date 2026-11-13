@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
             'name' => config('apq.admin.name'),
             'role' => Role::Admin,
             'employment_type' => EmploymentType::FullTime,
-            'locale' => config('apq.admin.locale'),
+            'locale' => config('apq.admin.locale') ?: 'en',
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
