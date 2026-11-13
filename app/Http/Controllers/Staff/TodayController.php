@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\TimeEntryStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class TodayController extends Controller
             ->orderBy('scheduled_start')
             ->get()
             // A running job always sits at the top.
-            ->sortByDesc(fn ($job) => $job->timeEntries->first()?->status === \App\Enums\TimeEntryStatus::Running)
+            ->sortByDesc(fn ($job) => $job->timeEntries->first()?->status === TimeEntryStatus::Running)
             ->values();
 
         return view('staff.today', compact('today', 'jobs'));

@@ -2,10 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Enums\AppointmentStatus;
 use App\Enums\Frequency;
+use App\Enums\TimeEntryStatus;
 use App\Models\Appointment;
 use App\Models\Client;
-use App\Enums\TimeEntryStatus;
 use App\Models\RecurringSchedule;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -68,7 +69,7 @@ class DemoSeeder extends Seeder
         $tzNow = Carbon::now($tz);
         $running = Appointment::factory()->for(Client::skip(1)->first())->at($tzNow->copy()->subMinutes(75)->toDateTimeString(), 180)->create();
         $running->staff()->attach($ana);
-        $running->update(['status' => \App\Enums\AppointmentStatus::InProgress]);
+        $running->update(['status' => AppointmentStatus::InProgress]);
         TimeEntry::create([
             'appointment_id' => $running->id, 'user_id' => $ana->id, 'client_id' => $running->client_id,
             'status' => TimeEntryStatus::Running, 'running_lock' => $ana->id, 'started_at' => $tzNow->copy()->subMinutes(72),
@@ -89,7 +90,7 @@ class DemoSeeder extends Seeder
                         'staff_adjusted' => $visit->id % 5 === 0,
                     ]);
                 }
-                $visit->update(['status' => \App\Enums\AppointmentStatus::Completed]);
+                $visit->update(['status' => AppointmentStatus::Completed]);
             });
     }
 }
