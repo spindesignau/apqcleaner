@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'welcome' => 'Bienvenido/a',
+    'subtitle' => 'Inicia sesión para ver tus trabajos.',
+    'email' => 'Correo electrónico',
+    'password' => 'Contraseña',
+    'show_password' => 'Mostrar contraseña',
+    'hide_password' => 'Ocultar contraseña',
+    'remember' => 'Mantener la sesión iniciada',
+    'sign_in' => 'Iniciar sesión',
+    'forgot' => '¿Olvidaste tu contraseña?',
+    'forgot_title' => 'Restablecer contraseña',
+    'forgot_help' => 'Escribe tu correo y te enviaremos un enlace para elegir una nueva contraseña.',
+    'send_link' => 'Enviar enlace',
+    'back_to_login' => 'Volver a iniciar sesión',
+    'reset_title' => 'Elige una nueva contraseña',
+    'new_password' => 'Nueva contraseña',
+    'confirm_password' => 'Confirmar nueva contraseña',
+    'reset_button' => 'Guardar nueva contraseña',
+    'change_title' => 'Crea tu propia contraseña',
+    'change_help' => 'Tu cuenta se creó con una contraseña temporal. Elige una nueva para continuar.',
+    'temporary_password' => 'Contraseña temporal',
+    'password_rules' => 'Mínimo 10 caracteres, con letras y números.',
+];

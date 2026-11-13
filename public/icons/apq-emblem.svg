@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="APQ">
+  <rect width="512" height="512" rx="0" fill="#161D2E"/>
+  <g transform="translate(58,170) scale(1.18)">
+  <g fill="#FFFFFF">
+    <polygon points="0,100 36,0 64,0 100,100 71,100 50,38 29,100"/>
+    <path fill-rule="evenodd" d="M110,0 H157 A30,30 0 0 1 157,62 H139 V100 H110 Z M139,24 H154 A7,7 0 0 1 154,38 H139 Z"/>
+    <path fill-rule="evenodd" d="M240,0 A50,50 0 1 1 239.9,0 Z M240,25 A25,25 0 1 0 240.1,25 Z"/>
+    <polygon points="246,64 271,64 300,100 274,100"/>
+  </g>
+  <path fill="#8E9683" d="M308,-22 Q311,-9 324,-6 Q311,-3 308,10 Q305,-3 292,-6 Q305,-9 308,-22 Z"/>
+  </g>
+  <text x="256" y="365" text-anchor="middle" fill="#FFFFFF" font-family="Montserrat, 'Helvetica Neue', Arial, sans-serif" font-size="27" font-weight="500" letter-spacing="7">CLEANING SERVICE</text>
+</svg>

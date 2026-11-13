@@ -286,19 +286,30 @@ All reports filter by date range, staff, client and suburb, and export to CSV an
 
 ## 7. Data migration from the existing spreadsheets
 
-The business currently runs on two Google Sheets: **Cleaners timesheets and costings** and **Client list**.
+Source files (supplied 13 Nov 2026; kept out of git and placed in `storage/import/`):
 
-> These sheets could not be read while this spec was written: Google Docs is outside this environment's network allow-list. The importer below is therefore **column-mapping driven**, and the mapping must be confirmed against the real headers before go-live.
+| File | What it contains |
+|---|---|
+| **Weekly Planner** (`.xlsx`, one sheet per week from May 2025) | Per day: an **EMPLEADOS** block (employee, hours, minutes, total minutes, hourly rate, per-minute rate, total paid) and a **CLIENTES** block (client first name, service hours, service value). Weekly totals, staff payments and "weekly profit". Also an *Informe* per-employee summary sheet. |
+| **Client database** (`Datos` sheet, CSV) | 198 clients: customer, phone, email, address, payment type (Cash/ABN), frequency, "focus on" special instructions, service type, service address, state, method of entry (key/lockbox codes), referral source, gifts. |
 
-- `php artisan apq:import:clients storage/import/clients.csv --map=config/import/clients.php`
-  - Expected fields to map: name, address (street, suburb, postcode), mobile, email, frequency, usual day/time, usual cleaner, hourly rate or fixed price, access/key notes, Xero contact name.
-  - Mobiles are normalised to E.164 (`04xx xxx xxx` → `+614xxxxxxxx`) with `giggsey/libphonenumber-for-php`.
-  - Duplicate detection by mobile or email. A dry-run report is printed before committing (`--commit`).
-  - Rows with a usual day/time and cleaner also create a `recurring_schedule`.
-- `php artisan apq:import:staff …` creates staff (name, email, mobile, pay rate, employment type) and sends set-password emails.
-- `php artisan apq:import:timesheets …` (optional) imports historic hours as `approved` + `legacy` entries so margin reports have history. They are never pushed to Xero.
+### Findings that shape the design
 
----
+- **Clients are charged a fixed price per visit** (e.g. $350 for ~7 h), not hourly. Default `clients.pricing_model = fixed`. The hourly option remains for new clients.
+- Service hours are written as **h.mm** (`7.15` = 7 h 15 m, `6.45` = 6 h 45 m). The importer converts these to minutes.
+- **Staff pay is hourly per person** ($30–$50/h), with whole-day hours + minutes. Older sheets show higher Saturday rates. Phase 2 adds optional **weekday/weekend pay rates** (`staff_rate_histories.day_type`).
+- The planner does **not** record which cleaner attended which client. From go-live, the app captures this per visit (`time_entries`).
+- *Payment type* (Cash / ABN) is stored per client (`clients.payment_method`). Cash clients may not need Xero invoices: this is an **open question** (§10).
+- *Frequency* values: Weekly, Biweekly, Every 3 weeks / Cada 3 semanas, Monthly / Mensual / Cada 4 semanas, Twice a week, Sporadic, AIRBNB. These map to `recurring_schedules.frequency`; Sporadic and Airbnb become one-off appointments.
+- *Method of entry* (codes, lockbox, under the mat) → `clients.access_notes`, which is shown only to assigned staff. *Focus on* → `clients.default_job_notes`.
+- The *State* column reads "Cancelled" on almost every row of the export. The importer has `--status=keep|active` and reports it in the dry run, so it isn't silently applied.
+- Columns P–S of the CSV are dropdown lookup lists, not client data, and are ignored.
+
+### Importers
+
+- `php artisan apq:import:staff <planner.xlsx> [--sheet=] [--commit]` (**built in Phase 0**). It reads names and hourly rates from the latest weekly sheet and creates staff with placeholder emails and temporary passwords. Existing accounts are matched by name and only their rate is updated.
+- `php artisan apq:import:clients <datos.csv> [--commit]` (Phase 1). Australian phone normalisation (`478651324` → `+61478651324`, international numbers kept), duplicate detection by phone/email/name, and a dry-run report.
+- `php artisan apq:import:history <planner.xlsx>` (Phase 2, optional). Daily staff hours and client revenue become legacy entries for margin reporting.
 
 ## 8. Non-functional requirements
 

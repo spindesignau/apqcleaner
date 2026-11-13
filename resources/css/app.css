@@ -1,0 +1,112 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource/montserrat/500.css";
+@import "@fontsource/montserrat/600.css";
+@import "@fontsource/montserrat/700.css";
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+/* APQ brand tokens — see docs/05-UI-THEME.md */
+@theme {
+    --color-navy: #161D2E;        /* Midnight Navy: primary, nav, logo on light */
+    --color-navy-700: #242E42;    /* Charcoal Navy: hover/pressed */
+    --color-navy-500: #3A4560;    /* muted text on light */
+    --color-canvas: #F4F2EC;      /* Warm Alabaster: page */
+    --color-canvas-50: #FAF9F6;   /* Stone Off-White: inputs, zebra rows */
+    --color-surface: #FFFFFF;     /* cards */
+    --color-sand: #E5E1D8;        /* borders */
+    --color-sand-600: #C9C3B6;    /* input borders */
+    --color-sage: #8E9683;        /* sparkle star, accents, focus ring (non-text) */
+    --color-sage-700: #5E6656;    /* sage text (AA) */
+    --color-sage-50: #E8EBE4;     /* badge backgrounds */
+    --color-offwhite: #F5F3EE;    /* text/logo on navy */
+    --color-stop: #3B3F46;        /* STOP JOB */
+    --color-stop-hover: #24272C;
+    --color-alert: #B4462F;
+    --color-alert-50: #F6E4DF;
+    --color-amber: #8A540C;
+    --color-amber-50: #F7ECD8;
+    --color-success: #4F6B47;
+
+    --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: "Montserrat", "Inter Variable", ui-sans-serif, sans-serif;
+
+    --radius-card: 1rem;
+    --radius-btn: 0.875rem;
+    --shadow-card: 0 1px 2px rgb(22 29 46 / 0.04), 0 4px 16px rgb(22 29 46 / 0.06);
+}
+
+@layer base {
+    html {
+        background: var(--color-canvas);
+        color: var(--color-navy);
+        -webkit-tap-highlight-color: transparent;
+    }
+    body {
+        @apply font-sans text-[17px] leading-relaxed antialiased;
+    }
+    h1, h2, h3 {
+        @apply font-display font-semibold tracking-tight;
+    }
+    :focus-visible {
+        outline: 3px solid var(--color-sage);
+        outline-offset: 2px;
+    }
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@utility card {
+    @apply rounded-[var(--radius-card)] border border-sand bg-surface p-5 shadow-[var(--shadow-card)];
+}
+@utility btn {
+    @apply inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[var(--radius-btn)] px-6 font-display text-[17px] font-bold tracking-wider uppercase transition-colors select-none disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+    @apply btn bg-navy text-offwhite hover:bg-navy-700 active:bg-navy-700;
+}
+@utility btn-stop {
+    @apply btn bg-stop text-white ring-2 ring-stop ring-offset-2 ring-offset-surface hover:bg-stop-hover;
+}
+@utility btn-secondary {
+    @apply btn border-2 border-navy bg-surface text-navy hover:bg-canvas-50;
+}
+@utility btn-danger {
+    @apply btn bg-alert text-white hover:brightness-95;
+}
+@utility btn-sm {
+    @apply min-h-11 w-auto rounded-xl px-4 text-sm;
+}
+@utility input {
+    @apply block min-h-14 w-full rounded-xl border-sand-600 bg-canvas-50 px-4 text-[17px] text-navy placeholder:text-navy-500/60 focus:border-sage focus:ring-sage;
+}
+@utility label {
+    @apply mb-1.5 block text-xs font-bold tracking-wider text-navy-500 uppercase;
+}
+@utility badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold;
+}
+@utility badge-sage {
+    @apply badge bg-sage-50 text-sage-700;
+}
+@utility badge-amber {
+    @apply badge bg-amber-50 text-amber;
+}
+@utility badge-navy {
+    @apply badge bg-navy text-offwhite;
+}
+@utility badge-sand {
+    @apply badge border border-sand bg-canvas text-navy-500;
+}
+@utility badge-alert {
+    @apply badge bg-alert-50 text-alert;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-pulse { animation: none; }
+}

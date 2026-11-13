@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'welcome' => 'Welcome back',
+    'subtitle' => 'Sign in to see your jobs.',
+    'email' => 'Email',
+    'password' => 'Password',
+    'show_password' => 'Show password',
+    'hide_password' => 'Hide password',
+    'remember' => 'Keep me signed in',
+    'sign_in' => 'Sign in',
+    'forgot' => 'Forgot password?',
+    'forgot_title' => 'Reset your password',
+    'forgot_help' => 'Enter your email and we will send you a link to choose a new password.',
+    'send_link' => 'Send reset link',
+    'back_to_login' => 'Back to sign in',
+    'reset_title' => 'Choose a new password',
+    'new_password' => 'New password',
+    'confirm_password' => 'Confirm new password',
+    'reset_button' => 'Save new password',
+    'change_title' => 'Set your own password',
+    'change_help' => 'Your account was set up with a temporary password. Please choose a new one to continue.',
+    'temporary_password' => 'Temporary password',
+    'password_rules' => 'At least 10 characters, with letters and numbers.',
+];
