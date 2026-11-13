@@ -65,8 +65,10 @@ jobs:
         run: npm ci && npm run build
 
       - name: Configure SSH
+        id: ssh
         env:
           SSH_PASSPHRASE: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "${{ secrets.STAGING_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
@@ -76,17 +78,39 @@ jobs:
             ssh-keygen -p -q -P "$SSH_PASSPHRASE" -N "" -f ~/.ssh/deploy_key >/dev/null \
               || { echo "::error::Could not unlock STAGING_SSH_KEY — check STAGING_SSH_PASSPHRASE"; exit 1; }
           fi
-          printf '%s\n' "${{ secrets.STAGING_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+          # Pinned host keys. Accept entries with or without the port ("[host]:2222 key…" or "host key…"):
+          # strip the port and look keys up under the host name via HostKeyAlias.
+          printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' | grep -v '^#' | grep -v '^[[:space:]]*$' \
+            | sed -E 's/^\[([^]]+)\]:[0-9]+ /\1 /' > ~/.ssh/known_hosts || true
           chmod 644 ~/.ssh/known_hosts
+          if [ ! -s ~/.ssh/known_hosts ]; then
+            echo "::error::STAGING_SSH_KNOWN_HOSTS is empty. On your computer run: ssh-keyscan -p $SSH_PORT <server> and paste the output into the secret."
+            exit 1
+          fi
+          if ! cut -d' ' -f1 ~/.ssh/known_hosts | tr ',' '\n' | grep -qxF "$SSH_HOST"; then
+            echo "::error::STAGING_SSH_KNOWN_HOSTS has no entry for the host in STAGING_SSH_HOST. Run ssh-keyscan against exactly that host (same IP or name) with -p $SSH_PORT."
+            exit 1
+          fi
+
           cat > ~/.ssh/config <<CFG
           Host staging
             HostName $SSH_HOST
             Port $SSH_PORT
             User $SSH_USER
             IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            HostKeyAlias $SSH_HOST
             StrictHostKeyChecking yes
+            ConnectTimeout 20
           CFG
-          ssh staging "test -f '$APP_PATH/.env'" || { echo "::error::$APP_PATH/.env is missing on the server — see docs/DEPLOY-STAGING.md step 5"; exit 1; }
+
+          if ! ssh staging true; then
+            echo "::error::SSH connection failed (see the message above). Host key → re-run ssh-keyscan with -p $SSH_PORT. 'Permission denied' → authorize the key in cPanel and check STAGING_SSH_USER."
+            exit 1
+          fi
+          ssh staging "test -f '$APP_PATH/.env'" \
+            || { echo "::error::Connected, but $APP_PATH/.env does not exist — see docs/DEPLOY-STAGING.md step 5"; exit 1; }
 
       - name: Maintenance mode on
         run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan down --retry=30 || true"
@@ -108,7 +132,7 @@ jobs:
             $PHP_BIN artisan queue:restart"
 
       - name: Maintenance mode off
-        if: always()
+        if: always() && steps.ssh.outcome == 'success'
         run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan up || true"
 
       - name: Smoke test

@@ -64,13 +64,13 @@ ssh-keygen -t ed25519 -N "" -C github-deploy -f github_deploy
 
 If **SSH Access** is missing, SSH is disabled for this account. Enable it for the account in WHM → **Modify an Account**, or ask your host.
 
-Find the SSH host, port and host fingerprint. On your own computer, run:
+Find the SSH port. cPanel servers often use a custom one: check cPanel → **SSH Access**, or the host's welcome email. Then, on your own computer, run this with **your port** and **the same host you put in `STAGING_SSH_HOST`**:
 
 ```bash
-ssh-keyscan -p 22 YOUR-SERVER-HOSTNAME
+ssh-keyscan -p 2222 43.250.141.96
 ```
 
-Use the real port if your host uses a non-standard one. Copy the whole output: it becomes `STAGING_SSH_KNOWN_HOSTS`. It lets GitHub verify it is talking to your server.
+Copy the whole output (several lines starting with `[43.250.141.96]:2222 ssh-…`). It becomes `STAGING_SSH_KNOWN_HOSTS` and lets GitHub verify it is talking to your server. If the output is empty, the port is wrong.
 
 ### 5. Create the server's `.env` (once)
 
@@ -210,7 +210,7 @@ Development-only files (tests, docs, `node_modules`) are never uploaded.
 |---|---|
 | `Could not unlock STAGING_SSH_KEY` | `STAGING_SSH_PASSPHRASE` doesn't match the key. Re-enter it, with no extra spaces or newline. |
 | `Permission denied (publickey)` | The key from step 4 isn't **Authorized** in cPanel, or `STAGING_SSH_USER` is wrong. |
-| `Host key verification failed` | Re-run `ssh-keyscan` and update `STAGING_SSH_KNOWN_HOSTS`. |
+| `Host key verification failed` / `No … host key is known` | `STAGING_SSH_KNOWN_HOSTS` doesn't match. Re-run `ssh-keyscan -p <your port> <the same host as STAGING_SSH_HOST>` and paste all of its output. |
 | `.env is missing on the server` | Complete step 5. |
 | `rsync: command not found` | Ask the host to enable rsync for jailshell accounts. |
 | 500 error after deploy | Check `~/apqcleaner/storage/logs/laravel-*.log`. Usually `APP_KEY` isn't set (step 8) or the database details in `.env` are wrong. |
