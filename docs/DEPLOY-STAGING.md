@@ -50,9 +50,17 @@ In **MySQL® Databases**:
 
 In cPanel, go to **SSH Access → Manage SSH Keys**:
 
-1. **Generate a New Key**. Name it `github_deploy`, with no passphrase, type RSA 4096 or Ed25519.
+1. **Generate a New Key**. Name it `github_deploy`, type RSA 4096. cPanel requires a passphrase: use a long random one and keep it for step 6.
 2. **Manage** the new public key and click **Authorize**.
 3. **View/Download** the **private** key. You will paste it into GitHub in step 6, then you can delete the downloaded copy.
+
+The workflow unlocks the key with `STAGING_SSH_PASSPHRASE` on GitHub's runner only. The key on your server is unchanged, and the runner's copy is discarded after each run.
+
+**Alternative (no passphrase):** create the key on your own computer, then use cPanel → SSH Access → **Import Key** to paste in the *public* key (`github_deploy.pub`), then **Authorize** it. Leave `STAGING_SSH_PASSPHRASE` unset.
+
+```bash
+ssh-keygen -t ed25519 -N "" -C github-deploy -f github_deploy
+```
 
 If **SSH Access** is missing, SSH is disabled for this account. Enable it for the account in WHM → **Modify an Account**, or ask your host.
 
@@ -118,6 +126,7 @@ In the repository, go to **Settings → Secrets and variables → Actions**.
 | `STAGING_SSH_PORT` | SSH port, usually `22` |
 | `STAGING_SSH_USER` | `CPANELUSER` |
 | `STAGING_SSH_KEY` | The whole private key from step 4, including the `-----BEGIN…` / `-----END…` lines |
+| `STAGING_SSH_PASSPHRASE` | The key's passphrase from step 4 (leave unset if the key has none) |
 | `STAGING_SSH_KNOWN_HOSTS` | The `ssh-keyscan` output from step 4 |
 | `STAGING_APP_PATH` | `/home/CPANELUSER/apqcleaner` |
 
@@ -199,6 +208,7 @@ Development-only files (tests, docs, `node_modules`) are never uploaded.
 
 | Symptom | Fix |
 |---|---|
+| `Could not unlock STAGING_SSH_KEY` | `STAGING_SSH_PASSPHRASE` doesn't match the key. Re-enter it, with no extra spaces or newline. |
 | `Permission denied (publickey)` | The key from step 4 isn't **Authorized** in cPanel, or `STAGING_SSH_USER` is wrong. |
 | `Host key verification failed` | Re-run `ssh-keyscan` and update `STAGING_SSH_KNOWN_HOSTS`. |
 | `.env is missing on the server` | Complete step 5. |

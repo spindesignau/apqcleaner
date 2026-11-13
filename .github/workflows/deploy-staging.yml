@@ -65,10 +65,17 @@ jobs:
         run: npm ci && npm run build
 
       - name: Configure SSH
+        env:
+          SSH_PASSPHRASE: ${{ secrets.STAGING_SSH_PASSPHRASE }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s\n' "${{ secrets.STAGING_SSH_KEY }}" > ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.STAGING_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # cPanel-generated keys require a passphrase: unlock the runner's throwaway copy so ssh/rsync run non-interactively.
+          if [ -n "$SSH_PASSPHRASE" ]; then
+            ssh-keygen -p -q -P "$SSH_PASSPHRASE" -N "" -f ~/.ssh/deploy_key >/dev/null \
+              || { echo "::error::Could not unlock STAGING_SSH_KEY — check STAGING_SSH_PASSPHRASE"; exit 1; }
+          fi
           printf '%s\n' "${{ secrets.STAGING_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
           cat > ~/.ssh/config <<CFG
