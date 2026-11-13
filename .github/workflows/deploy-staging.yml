@@ -1,0 +1,111 @@
+name: deploy-staging
+
+# Builds the app on GitHub (PHP 8.4 + Node) and uploads it to the cPanel staging site over SSH.
+# Setup: docs/DEPLOY-STAGING.md. Nothing deploys until the repository variable STAGING_ENABLED is "true".
+
+on:
+  push:
+    branches: [main, staging, 'claude/brave-fermat-5h2y4z']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, bcmath, gd, exif, zip, pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: npm ci && npm run build
+      - run: cp .env.example .env && php artisan key:generate
+      - run: ./vendor/bin/pint --test
+      - run: php artisan apq:lang:check
+      - run: php artisan test
+
+  deploy:
+    needs: test
+    if: vars.STAGING_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://apqcleaner.spinstaging.com
+    env:
+      SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+      SSH_PORT: ${{ secrets.STAGING_SSH_PORT || '22' }}
+      SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+      APP_PATH: ${{ secrets.STAGING_APP_PATH }}
+      PHP_BIN: ${{ vars.STAGING_PHP_BIN || 'php' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, bcmath, gd, exif, zip
+          coverage: none
+      - name: Install PHP dependencies (production)
+        run: composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Build front-end assets
+        run: npm ci && npm run build
+
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.STAGING_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.STAGING_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<CFG
+          Host staging
+            HostName $SSH_HOST
+            Port $SSH_PORT
+            User $SSH_USER
+            IdentityFile ~/.ssh/deploy_key
+            StrictHostKeyChecking yes
+          CFG
+          ssh staging "test -f '$APP_PATH/.env'" || { echo "::error::$APP_PATH/.env is missing on the server — see docs/DEPLOY-STAGING.md step 5"; exit 1; }
+
+      - name: Maintenance mode on
+        run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan down --retry=30 || true"
+
+      - name: Upload
+        run: |
+          rsync -az --delete --exclude-from=.github/deploy-exclude.txt ./ "staging:$APP_PATH/"
+
+      - name: Migrate and warm caches
+        run: |
+          ssh staging "set -e
+            cd '$APP_PATH'
+            mkdir -p storage/app/private storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/import bootstrap/cache
+            chmod -R ug+rwX storage bootstrap/cache
+            $PHP_BIN artisan migrate --force
+            $PHP_BIN artisan storage:link || true
+            $PHP_BIN artisan optimize:clear
+            $PHP_BIN artisan optimize
+            $PHP_BIN artisan queue:restart"
+
+      - name: Maintenance mode off
+        if: always()
+        run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan up || true"
+
+      - name: Smoke test
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://apqcleaner.spinstaging.com/up)
+          echo "Health check returned $code"
+          test "$code" = "200"

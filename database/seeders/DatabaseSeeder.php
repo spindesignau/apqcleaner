@@ -11,37 +11,37 @@ use Illuminate\Support\Str;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Creates the first administrator from APQ_ADMIN_* env values.
+     * Creates the first administrator from apq.admin config (APQ_ADMIN_* in .env).
      * Staff are imported from the Weekly Planner: php artisan apq:import:staff <file> --commit
      * Demo staff (local only): php artisan db:seed --class=DemoSeeder
      */
     public function run(): void
     {
-        $email = env('APQ_ADMIN_EMAIL');
+        $email = config('apq.admin.email');
         if (! $email) {
             $this->command?->warn('APQ_ADMIN_EMAIL is not set — no admin created.');
 
             return;
         }
 
-        $password = env('APQ_ADMIN_PASSWORD') ?: Str::password(14, symbols: false);
+        $password = config('apq.admin.password') ?: Str::password(14, symbols: false);
         $admin = User::firstOrNew(['email' => $email]);
         $created = ! $admin->exists;
 
         $admin->forceFill([
-            'name' => env('APQ_ADMIN_NAME', 'Adriana Palacio'),
+            'name' => config('apq.admin.name'),
             'role' => Role::Admin,
             'employment_type' => EmploymentType::FullTime,
-            'locale' => env('APQ_ADMIN_LOCALE', 'es'),
+            'locale' => config('apq.admin.locale'),
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
         if ($created) {
-            $admin->forceFill(['password' => $password, 'must_change_password' => ! env('APQ_ADMIN_PASSWORD')]);
+            $admin->forceFill(['password' => $password, 'must_change_password' => ! config('apq.admin.password')]);
         }
         $admin->save();
 
-        if ($created && ! env('APQ_ADMIN_PASSWORD')) {
+        if ($created && ! config('apq.admin.password')) {
             $this->command?->info("Admin {$email} created. Temporary password: {$password}");
         }
     }

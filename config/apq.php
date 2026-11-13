@@ -18,6 +18,14 @@ return [
         'notify_staff_on_cancel' => true,
     ],
 
+    // First administrator, created by `php artisan db:seed` (read via config so it works with config:cache).
+    'admin' => [
+        'email' => env('APQ_ADMIN_EMAIL'),
+        'name' => env('APQ_ADMIN_NAME', 'Adriana Palacio'),
+        'password' => env('APQ_ADMIN_PASSWORD'),
+        'locale' => env('APQ_ADMIN_LOCALE', 'es'),
+    ],
+
     'avatars' => [
         'disk' => 'local',
         'directory' => 'avatars',

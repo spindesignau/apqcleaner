@@ -1,0 +1,19 @@
+# Never uploaded to the server (rsync --exclude-from). Server-owned files are also protected from --delete.
+/.git/
+/.github/
+/.agents/
+/.claude/
+/node_modules/
+/tests/
+/docs/
+/brand/
+/.env
+/.env.*
+/storage/
+/bootstrap/cache/*.php
+/public/storage
+/public/hot
+/database/*.sqlite
+/.phpunit.cache/
+/.phpunit.result.cache
+/skills-lock.json

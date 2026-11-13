@@ -55,6 +55,10 @@ Demo accounts:
 | `cleaner.en@demo.test` | Staff, English |
 | `locked@demo.test` | Locked account (shows the lockout message) |
 
+## Staging deploys
+
+Pushes deploy automatically to **https://apqcleaner.spinstaging.com** through GitHub Actions once it is set up. See [docs/DEPLOY-STAGING.md](docs/DEPLOY-STAGING.md).
+
 ## Production first run
 
 1. Set `APQ_ADMIN_EMAIL` (and optionally `APQ_ADMIN_PASSWORD`) in `.env`.
