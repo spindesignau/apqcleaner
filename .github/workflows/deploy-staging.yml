@@ -41,13 +41,27 @@ jobs:
       name: staging
       url: https://apqcleaner.spinstaging.com
     env:
-      SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
-      SSH_PORT: ${{ secrets.STAGING_SSH_PORT || '22' }}
-      SSH_USER: ${{ secrets.STAGING_SSH_USER }}
-      APP_PATH: ${{ secrets.STAGING_APP_PATH }}
       PHP_BIN: ${{ vars.STAGING_PHP_BIN || 'php' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Read connection settings
+        env:
+          RAW_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          RAW_PORT: ${{ secrets.STAGING_SSH_PORT }}
+          RAW_USER: ${{ secrets.STAGING_SSH_USER }}
+          RAW_PATH: ${{ secrets.STAGING_APP_PATH }}
+        run: |
+          trim() { printf '%s' "$1" | tr -d '\r\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g'; }
+          {
+            echo "SSH_HOST=$(trim "$RAW_HOST")"
+            echo "SSH_PORT=$(trim "${RAW_PORT:-22}")"
+            echo "SSH_USER=$(trim "$RAW_USER")"
+            echo "APP_PATH=$(trim "$RAW_PATH" | sed 's:/*$::')"
+          } >> "$GITHUB_ENV"
+          for v in RAW_HOST RAW_USER RAW_PATH; do
+            [ -n "$(trim "${!v}")" ] || { echo "::error::A required STAGING_SSH_HOST / STAGING_SSH_USER / STAGING_APP_PATH secret is empty"; exit 1; }
+          done
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -79,19 +93,18 @@ jobs:
               || { echo "::error::Could not unlock STAGING_SSH_KEY — check STAGING_SSH_PASSPHRASE"; exit 1; }
           fi
 
-          # Pinned host keys. Accept entries with or without the port ("[host]:2222 key…" or "host key…"):
-          # strip the port and look keys up under the host name via HostKeyAlias.
-          printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' | grep -v '^#' | grep -v '^[[:space:]]*$' \
-            | sed -E 's/^\[([^]]+)\]:[0-9]+ /\1 /' > ~/.ssh/known_hosts || true
+          # Pinned host keys. Take every "<host> <type> <key>" line (plain, [host]:port or hashed |1|…),
+          # keep only the key, and pin it under the alias "staging-server". The host spelling no longer matters;
+          # SSH still refuses to connect unless the server presents one of these exact keys.
+          printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' \
+            | awk '$0 !~ /^[[:space:]]*#/ && NF >= 3 && $2 ~ /^(ssh-|ecdsa-|sk-)/ { print "staging-server", $2, $3 }' \
+            > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
           if [ ! -s ~/.ssh/known_hosts ]; then
-            echo "::error::STAGING_SSH_KNOWN_HOSTS is empty. On your computer run: ssh-keyscan -p $SSH_PORT <server> and paste the output into the secret."
+            echo "::error::No host keys found in STAGING_SSH_KNOWN_HOSTS. On your computer run: ssh-keyscan -p $SSH_PORT <server> and paste ALL of its output (lines containing ssh-ed25519 / ssh-rsa / ecdsa-…)."
             exit 1
           fi
-          if ! cut -d' ' -f1 ~/.ssh/known_hosts | tr ',' '\n' | grep -qxF "$SSH_HOST"; then
-            echo "::error::STAGING_SSH_KNOWN_HOSTS has no entry for the host in STAGING_SSH_HOST. Run ssh-keyscan against exactly that host (same IP or name) with -p $SSH_PORT."
-            exit 1
-          fi
+          echo "Pinned host key types: $(cut -d' ' -f2 ~/.ssh/known_hosts | sort -u | tr '\n' ' ')"
 
           cat > ~/.ssh/config <<CFG
           Host staging
@@ -100,13 +113,13 @@ jobs:
             User $SSH_USER
             IdentityFile ~/.ssh/deploy_key
             IdentitiesOnly yes
-            HostKeyAlias $SSH_HOST
+            HostKeyAlias staging-server
             StrictHostKeyChecking yes
             ConnectTimeout 20
           CFG
 
           if ! ssh staging true; then
-            echo "::error::SSH connection failed (see the message above). Host key → re-run ssh-keyscan with -p $SSH_PORT. 'Permission denied' → authorize the key in cPanel and check STAGING_SSH_USER."
+            echo "::error::SSH connection failed (see the message above). 'Host key verification failed' → the keys in STAGING_SSH_KNOWN_HOSTS are not this server's (re-run ssh-keyscan -p $SSH_PORT). 'Permission denied' → authorize the key in cPanel and check STAGING_SSH_USER."
             exit 1
           fi
           ssh staging "test -f '$APP_PATH/.env'" \
