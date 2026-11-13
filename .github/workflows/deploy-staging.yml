@@ -128,9 +128,18 @@ jobs:
       - name: Maintenance mode on
         run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan down --retry=30 || true"
 
-      - name: Upload
+      - name: Package release
         run: |
-          rsync -az --delete --exclude-from=.github/deploy-exclude.txt ./ "staging:$APP_PATH/"
+          # rsync runs only here on GitHub's runner (to apply the exclude list); the server needs just tar.
+          mkdir -p "$RUNNER_TEMP/release"
+          rsync -a --exclude-from=.github/deploy-exclude.txt ./ "$RUNNER_TEMP/release/"
+          tar -C "$RUNNER_TEMP/release" -czf "$RUNNER_TEMP/release.tar.gz" .
+          du -h "$RUNNER_TEMP/release.tar.gz"
+
+      - name: Upload and install
+        run: |
+          ssh staging "mkdir -p '$APP_PATH/.deploy' && cat > '$APP_PATH/.deploy/release.tar.gz'" < "$RUNNER_TEMP/release.tar.gz"
+          ssh staging "bash -s -- '$APP_PATH'" < .github/scripts/install-release.sh
 
       - name: Migrate and warm caches
         run: |

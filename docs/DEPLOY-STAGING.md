@@ -4,13 +4,13 @@ Every push to the default branch (or `staging` / `main`) runs the tests on GitHu
 
 1. Builds the app with PHP 8.4 and Node (production Composer packages and compiled CSS/JS).
 2. Puts the site in maintenance mode.
-3. Uploads the files to cPanel over SSH (rsync).
+3. Uploads the release to cPanel as one archive over SSH and unpacks it with `tar`.
 4. Runs migrations and rebuilds caches.
 5. Brings the site back and checks `https://apqcleaner.spinstaging.com/up`.
 
 The workflow is `.github/workflows/deploy-staging.yml`. You can also run it by hand from **GitHub → Actions → deploy-staging → Run workflow**.
 
-The server never needs Git, Node or Composer. It only needs PHP 8.4, SSH and rsync, which are standard on cPanel.
+The server never needs Git, Node, Composer or rsync. It only needs PHP 8.4, SSH, bash and tar, which every cPanel account has.
 
 > In the steps below, replace `CPANELUSER` with the cPanel username of the account that owns `apqcleaner.spinstaging.com`.
 
@@ -196,11 +196,13 @@ Add `--commit` to save.
 
 ## What a deploy never touches
 
-These are excluded in `.github/deploy-exclude.txt`:
+These are excluded in `.github/deploy-exclude.txt` and protected by `.github/scripts/install-release.sh`:
 
 - `.env`
 - `storage/` (uploads, logs, sessions, import files)
 - `public/storage`
+- `public/.well-known` (AutoSSL)
+- `.deploy/` (the deploy's own bookkeeping)
 
 Development-only files (tests, docs, `node_modules`) are never uploaded.
 
@@ -212,6 +214,6 @@ Development-only files (tests, docs, `node_modules`) are never uploaded.
 | `Permission denied (publickey)` | The key from step 4 isn't **Authorized** in cPanel, or `STAGING_SSH_USER` is wrong. |
 | `Host key verification failed` / `No … host key is known` | `STAGING_SSH_KNOWN_HOSTS` doesn't match. Re-run `ssh-keyscan -p <your port> <the same host as STAGING_SSH_HOST>` and paste all of its output. |
 | `.env is missing on the server` | Complete step 5. |
-| `rsync: command not found` | Ask the host to enable rsync for jailshell accounts. |
+| `tar: command not found` | Very rare on cPanel. Ask the host to enable it for the account's shell (jailshell). |
 | 500 error after deploy | Check `~/apqcleaner/storage/logs/laravel-*.log`. Usually `APP_KEY` isn't set (step 8) or the database details in `.env` are wrong. |
 | Old styles or JS showing | Hard-refresh. Asset file names change on every build, so this clears itself. |
