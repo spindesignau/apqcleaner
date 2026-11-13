@@ -17,7 +17,17 @@
                 <x-lang-pill tone="dark" />
             </div>
         </div>
-        {{-- Phase 2: running-timer banner goes here. --}}
+        @php $running = auth()->user()->runningEntry(); @endphp
+        @if ($running && ! request()->routeIs('jobs.show'))
+            <a href="{{ route('jobs.show', $running->appointment_id) }}" class="block bg-sage-50 text-sage-700">
+                <span class="mx-auto flex h-11 max-w-md items-center gap-2 px-4 text-[15px] font-bold">
+                    <span class="size-2.5 shrink-0 animate-pulse rounded-full bg-sage"></span>
+                    <span class="min-w-0 flex-1 truncate">{{ __('timer.banner', ['client' => $running->appointment->client->display_name]) }}</span>
+                    <x-job-timer :entry="$running" size="sm" class="shrink-0" />
+                    <span class="shrink-0" aria-hidden="true">›</span>
+                </span>
+            </a>
+        @endif
     </header>
 
     <main class="mx-auto max-w-md px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))]">

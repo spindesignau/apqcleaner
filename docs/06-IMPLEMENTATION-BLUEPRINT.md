@@ -493,7 +493,8 @@ GitHub Actions run Pint, Larastan, Pest and `npm run build`, then deploy over SS
 |---|---|---|
 | 0. Foundations | ✅ Done | Blade + Alpine only. Livewire is not installed yet, because forms are plain posts. It will be added in Phase 2 for the inline timesheet grid. |
 | 1. Clients and scheduling | ✅ Done | **Price snapshot:** each appointment stores `pricing_model` + `price` when it is created, instead of keeping separate `client_rate_histories`. A price change only affects visits generated afterwards. **No drag-and-drop:** the week board uses edit forms, not drag-and-drop. **Weekend rates:** `users.saturday_rate` / `sunday_rate` (owner confirmed Saturday rates; Sunday rates appear in the planner too). |
-| 2. Timer and timesheets | Next | |
+| 2. Timer and timesheets | ✅ Done | **No Livewire:** the admin grid uses plain forms (bulk approve plus an edit page per entry), not inline editing. **No end-of-day auto-stop job:** the watchdog runs every 15 minutes and auto-stops timers from a previous day. **No overrun SMS yet:** long-running timers show on the dashboard; the SMS nudge comes in Phase 4. **Pay periods:** fortnights are counted from the `pay_period_anchor` setting (Mon 5 Jan 2026). |
+| 3. Xero | Next | |
 
 ## 10. Open questions for the owner
 

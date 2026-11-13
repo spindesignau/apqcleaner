@@ -23,6 +23,15 @@ A mobile-first app for APQ Cleaning Service (Northern Beaches, Sydney) covering 
 - **Pay rates:** optional Saturday and Sunday rates per cleaner, falling back to their normal rate.
 - **Client import:** `apq:import:clients` reads the client CSV. It skips rows marked "Cancelled" (`--include-cancelled` imports them as inactive), detects suburbs, normalises phones and flags invalid emails.
 
+**Phase 2 (job timer and timesheets) is done:**
+- **Cleaner timer:** START → STOP → SUBMIT. The start time is saved on the server, so closing the browser or losing signal never loses the timer. The database allows only one running timer per cleaner, and double taps do nothing. Optional GPS on start.
+- **Review screen:** big start/end/total, an "Adjust times" option (original times are kept for the office), notes, then Submit. The timesheet is locked after submitting.
+- **Status:** a "job running" banner on every cleaner screen. A visit is completed once every assigned cleaner has submitted.
+- **Watchdog:** `apq:timers:watchdog` stops timers left running overnight at the scheduled end and flags them. Locking a cleaner stops their timer.
+- **Admin timesheets:** grid for the current or previous fortnightly pay period with filters, scheduled vs logged variance, labour cost and totals. A missing-timesheets list with "Add time", bulk approve, edit with a reason (audited), send back to the cleaner, and stop a running timer.
+- **Approval:** freezes the visit price and the cleaner's pay rate for that day (Saturday/Sunday rates applied).
+- **Dashboard:** visits today, awaiting approval, and live timers with "running long" alerts.
+
 The next phases are listed in [docs/06-IMPLEMENTATION-BLUEPRINT.md §9](docs/06-IMPLEMENTATION-BLUEPRINT.md).
 
 ## Local setup

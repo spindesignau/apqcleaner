@@ -1,15 +1,106 @@
-@php $client = $job->client; @endphp
+@php
+    use App\Enums\TimeEntryStatus;
+    $client = $job->client;
+    $fmt = app()->getLocale() === 'es' ? 'H:i' : 'g:ia';
+@endphp
 <x-layouts.staff :title="$client->display_name">
-    <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('jobs.today') }}" class="inline-flex min-h-11 items-center font-semibold text-navy-500">← {{ __('staff.job.back') }}</a>
+    <a href="{{ route('jobs.today') }}" class="inline-flex min-h-11 items-center font-semibold text-navy-500">← {{ __('staff.job.back') }}</a>
 
-    <div class="card mt-1">
+    @error('timer')<p class="mb-3 rounded-xl bg-alert-50 px-4 py-3 font-medium text-alert" role="alert">{{ $message }}</p>@enderror
+
+    {{-- ===== Timer / timesheet panel ===== --}}
+    @if (! $entry)
+        @if ($canStart->allowed())
+            <form method="POST" action="{{ route('jobs.start', $job) }}" data-gps class="mb-4">
+                @csrf
+                <x-gps-fields />
+                <button type="submit" class="btn-primary !min-h-16 text-xl">▶ {{ __('timer.start_job') }}</button>
+            </form>
+        @elseif ($canStart->message())
+            <p class="mb-4 rounded-xl border border-dashed border-sand-600 px-4 py-3 text-center text-[15px] text-navy-500">⏱ {{ $canStart->message() }}</p>
+        @endif
+    @elseif ($entry->status === TimeEntryStatus::Running)
+        <section class="card mb-4 border-l-[6px] !border-l-sage text-center">
+            <p class="badge-sage"><span class="size-2.5 animate-pulse rounded-full bg-sage"></span> {{ __('timer.in_progress') }}</p>
+            <p class="mt-4"><x-job-timer :entry="$entry" /></p>
+            <p class="mt-2 text-navy-500">{{ __('timer.started_at', ['time' => $entry->localStart()->format($fmt)]) }}</p>
+            <form method="POST" action="{{ route('jobs.stop', $job) }}" class="mt-5" x-data
+                  @submit="if (! confirm(@js(__('timer.confirm_stop', ['client' => $client->display_name])))) $event.preventDefault()">
+                @csrf
+                <button type="submit" class="btn-stop !min-h-16 text-xl">■ {{ __('timer.stop_job') }}</button>
+            </form>
+        </section>
+    @elseif (in_array($entry->status, [TimeEntryStatus::Stopped, TimeEntryStatus::Rejected], true))
+        <section class="card mb-4" x-data="{ adjusting: {{ $errors->has('start_time') || $errors->has('end_time') ? 'true' : 'false' }} }">
+            <h2 class="text-xl">{{ __('timer.review_title') }}</h2>
+            @if ($entry->status === TimeEntryStatus::Rejected)
+                <p class="mt-2 rounded-xl bg-alert-50 px-4 py-3 text-[15px] text-alert" role="alert">↩ {{ __('timer.sent_back', ['reason' => $entry->rejected_reason]) }}</p>
+            @endif
+            @if ($entry->auto_stopped)
+                <p class="mt-2 rounded-xl bg-amber-50 px-4 py-3 text-[15px] text-amber">{{ __('timer.auto_stopped_note') }}</p>
+            @endif
+            <div class="mt-4 grid grid-cols-2 gap-3">
+                <div class="rounded-xl border border-sand bg-canvas-50 p-3">
+                    <p class="label !mb-0">{{ __('timer.start') }}</p>
+                    <p class="font-display text-2xl font-semibold">{{ $entry->localStart()->format($fmt) }}</p>
+                </div>
+                <div class="rounded-xl border border-sand bg-canvas-50 p-3">
+                    <p class="label !mb-0">{{ __('timer.end') }}</p>
+                    <p class="font-display text-2xl font-semibold">{{ $entry->localEnd()->format($fmt) }}</p>
+                </div>
+            </div>
+            <p class="mt-5 text-center font-display text-5xl font-semibold leading-none">{{ __('timer.minutes', ['n' => $entry->duration_minutes]) }}</p>
+            <p class="mt-2 text-center text-navy-500">{{ \App\Models\TimeEntry::formatMinutes($entry->duration_minutes) }}</p>
+
+            <p class="mt-4 text-center">
+                <button type="button" class="font-semibold underline underline-offset-4" @click="adjusting = !adjusting" :aria-expanded="adjusting">{{ __('timer.adjust_times') }} ›</button>
+            </p>
+            <form method="POST" action="{{ route('jobs.adjust', $job) }}" x-show="adjusting" x-cloak class="mt-4 space-y-3 rounded-xl bg-canvas-50 p-4">
+                @csrf
+                @method('PATCH')
+                <p class="text-sm text-navy-500">{{ __('timer.adjust_help') }}</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="start_time" class="label">{{ __('timer.start') }}</label>
+                        <input id="start_time" name="start_time" type="time" required value="{{ old('start_time', $entry->localStart()->format('H:i')) }}" class="input">
+                    </div>
+                    <div>
+                        <label for="end_time" class="label">{{ __('timer.end') }}</label>
+                        <input id="end_time" name="end_time" type="time" required value="{{ old('end_time', $entry->localEnd()->format('H:i')) }}" class="input">
+                    </div>
+                </div>
+                <x-field-error name="start_time" />
+                <x-field-error name="end_time" />
+                <button type="submit" class="btn-secondary">{{ __('timer.save_times') }}</button>
+            </form>
+
+            <form method="POST" action="{{ route('jobs.submit', $job) }}" class="mt-5 space-y-4">
+                @csrf
+                <div>
+                    <label for="staff_notes" class="label">{{ __('timer.notes') }}</label>
+                    <textarea id="staff_notes" name="staff_notes" rows="4" maxlength="2000" placeholder="{{ __('timer.notes_placeholder') }}"
+                              class="input !min-h-28 py-3">{{ old('staff_notes', $entry->staff_notes) }}</textarea>
+                    <x-field-error name="staff_notes" />
+                </div>
+                <button type="submit" class="btn-primary !min-h-16 text-xl">✓ {{ __('timer.submit_timesheet') }}</button>
+            </form>
+        </section>
+    @else
+        <section class="card mb-4 text-center">
+            <span class="{{ $entry->status->badgeClass() }}">{{ $entry->status->label() }}</span>
+            <p class="mt-3 font-display text-4xl font-semibold">{{ \App\Models\TimeEntry::formatMinutes($entry->duration_minutes) }}</p>
+            <p class="mt-1 text-navy-500">{{ $entry->localStart()->format($fmt) }} – {{ $entry->localEnd()?->format($fmt) }}</p>
+            @if ($entry->staff_notes)<p class="mt-3 whitespace-pre-line text-left text-[15px]">“{{ $entry->staff_notes }}”</p>@endif
+            <p class="mt-3 text-sm text-navy-500">🔒 {{ __('timer.locked_note') }}</p>
+        </section>
+    @endif
+
+    {{-- ===== Job details ===== --}}
+    <div class="card">
         <p class="font-display text-[17px] font-semibold">
             {{ ucfirst($job->localStart()->translatedFormat(__('dates.day_short'))) }} · {{ $job->timeRange() }}
         </p>
         <h1 class="mt-1 text-[26px] leading-tight">{{ $client->display_name }}</h1>
-        @if ($job->status !== \App\Enums\AppointmentStatus::Scheduled)
-            <span class="{{ $job->status->badgeClass() }} mt-2">{{ $job->status->label() }}</span>
-        @endif
 
         <dl class="mt-5 space-y-4 text-[16px]">
             <div>
@@ -56,6 +147,4 @@
             @endif
         </dl>
     </div>
-
-    <p class="mt-4 rounded-xl border border-dashed border-sand-600 px-4 py-3 text-center text-[15px] text-navy-500">⏱ {{ __('staff.job.timer_soon') }}</p>
 </x-layouts.staff>

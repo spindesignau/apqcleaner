@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RecurringScheduleController;
 use App\Http\Controllers\Admin\ScheduleBoardController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\TimesheetController;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
@@ -43,6 +44,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/jobs/today', TodayController::class)->name('jobs.today');
         Route::get('/jobs/week/{week?}', WeekController::class)->where('week', '\d{4}-W\d{2}')->name('jobs.week');
         Route::get('/jobs/{appointment}', [JobController::class, 'show'])->whereNumber('appointment')->name('jobs.show');
+        Route::post('/jobs/{appointment}/start', [JobController::class, 'start'])->name('jobs.start');
+        Route::post('/jobs/{appointment}/stop', [JobController::class, 'stop'])->name('jobs.stop');
+        Route::patch('/jobs/{appointment}/times', [JobController::class, 'adjust'])->name('jobs.adjust');
+        Route::post('/jobs/{appointment}/submit', [JobController::class, 'submit'])->name('jobs.submit');
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [ProfileController::class, 'password'])->name('profile.password');
@@ -63,6 +68,15 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::get('/schedule', ScheduleBoardController::class)->name('schedule');
             Route::resource('appointments', AppointmentController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
+
+            Route::get('/timesheets', [TimesheetController::class, 'index'])->name('timesheets.index');
+            Route::get('/timesheets/create', [TimesheetController::class, 'create'])->name('timesheets.create');
+            Route::post('/timesheets', [TimesheetController::class, 'store'])->name('timesheets.store');
+            Route::post('/timesheets/approve', [TimesheetController::class, 'approve'])->name('timesheets.approve');
+            Route::get('/timesheets/{entry}/edit', [TimesheetController::class, 'edit'])->name('timesheets.edit');
+            Route::put('/timesheets/{entry}', [TimesheetController::class, 'update'])->name('timesheets.update');
+            Route::post('/timesheets/{entry}/reject', [TimesheetController::class, 'reject'])->name('timesheets.reject');
+            Route::post('/timesheets/{entry}/stop', [TimesheetController::class, 'stop'])->name('timesheets.stop');
         });
     });
 });

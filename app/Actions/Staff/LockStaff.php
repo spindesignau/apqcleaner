@@ -2,6 +2,7 @@
 
 namespace App\Actions\Staff;
 
+use App\Actions\Timer\StopJob;
 use App\Models\User;
 use App\Services\Audit;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,8 @@ class LockStaff
             // Database session driver: deleting the rows logs the user out everywhere, instantly.
             DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
 
-            // Phase 2: auto-stop any running timer here.
+            // A locked cleaner can't stop their own timer any more.
+            $user->timeEntries()->running()->with('client')->get()->each(fn ($entry) => app(StopJob::class)($entry, auto: true));
 
             Audit::log('user.locked', $user, after: ['is_active' => false], reason: $reason);
         });

@@ -68,6 +68,16 @@ class User extends Authenticatable
         return $this->belongsToMany(Appointment::class, 'appointment_staff')->withPivot('notified_at');
     }
 
+    public function timeEntries()
+    {
+        return $this->hasMany(TimeEntry::class);
+    }
+
+    public function runningEntry(): ?TimeEntry
+    {
+        return $this->timeEntries()->running()->with('appointment.client')->first();
+    }
+
     /** Pay rate for a given day (ISO weekday 6 = Saturday, 7 = Sunday). */
     public function payRateFor(\DateTimeInterface $date): ?string
     {

@@ -62,6 +62,11 @@ class Appointment extends Model
         return $this->belongsToMany(User::class, 'appointment_staff')->withPivot('notified_at');
     }
 
+    public function timeEntries()
+    {
+        return $this->hasMany(TimeEntry::class);
+    }
+
     public function localStart(): Carbon
     {
         return $this->scheduled_start->copy()->tz(config('apq.display_timezone'));

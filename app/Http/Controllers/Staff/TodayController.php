@@ -17,9 +17,12 @@ class TodayController extends Controller
             ->forStaff($request->user())
             ->active()
             ->betweenLocalDates($today, $today)
-            ->with(['client', 'staff:id,name'])
+            ->with(['client', 'staff:id,name', 'timeEntries' => fn ($q) => $q->where('user_id', $request->user()->id)])
             ->orderBy('scheduled_start')
-            ->get();
+            ->get()
+            // A running job always sits at the top.
+            ->sortByDesc(fn ($job) => $job->timeEntries->first()?->status === \App\Enums\TimeEntryStatus::Running)
+            ->values();
 
         return view('staff.today', compact('today', 'jobs'));
     }

@@ -5,7 +5,9 @@ namespace Database\Seeders;
 use App\Enums\Frequency;
 use App\Models\Appointment;
 use App\Models\Client;
+use App\Enums\TimeEntryStatus;
 use App\Models\RecurringSchedule;
+use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\Scheduling\AppointmentGenerator;
 use Illuminate\Database\Seeder;
@@ -61,5 +63,33 @@ class DemoSeeder extends Seeder
         $today = Appointment::factory()->for(Client::first())->at(Carbon::now($tz)->setTime(14, 0)->toDateTimeString(), 120)
             ->create(['job_notes' => 'Visita extra: ventanas']);
         $today->staff()->attach($ana);
+
+        // Timer demo states: a running job for the Spanish cleaner, submitted time from earlier in the week.
+        $tzNow = Carbon::now($tz);
+        $running = Appointment::factory()->for(Client::skip(1)->first())->at($tzNow->copy()->subMinutes(75)->toDateTimeString(), 180)->create();
+        $running->staff()->attach($ana);
+        $running->update(['status' => \App\Enums\AppointmentStatus::InProgress]);
+        TimeEntry::create([
+            'appointment_id' => $running->id, 'user_id' => $ana->id, 'client_id' => $running->client_id,
+            'status' => TimeEntryStatus::Running, 'running_lock' => $ana->id, 'started_at' => $tzNow->copy()->subMinutes(72),
+        ]);
+
+        Appointment::query()->where('scheduled_end', '<', now())->whereNull('deleted_at')->with(['staff', 'client'])->get()
+            ->each(function (Appointment $visit) {
+                foreach ($visit->staff as $i => $person) {
+                    $start = $visit->scheduled_start->copy()->addMinutes(5 + $i * 3);
+                    $end = $visit->scheduled_end->copy()->addMinutes([-10, 12, 0, 25][($visit->id + $i) % 4]);
+                    $minutes = (int) round($start->diffInSeconds($end) / 60);
+                    TimeEntry::create([
+                        'appointment_id' => $visit->id, 'user_id' => $person->id, 'client_id' => $visit->client_id,
+                        'status' => TimeEntryStatus::Submitted, 'started_at' => $start, 'ended_at' => $end,
+                        'duration_seconds' => $minutes * 60, 'duration_minutes' => $minutes,
+                        'billable_minutes' => (int) ceil($minutes / 15) * 15, 'submitted_at' => $end,
+                        'staff_notes' => ['Todo bien', 'Oven cleaned', null, 'Out of glass cleaner'][$visit->id % 4],
+                        'staff_adjusted' => $visit->id % 5 === 0,
+                    ]);
+                }
+                $visit->update(['status' => \App\Enums\AppointmentStatus::Completed]);
+            });
     }
 }

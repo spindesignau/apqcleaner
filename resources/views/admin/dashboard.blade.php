@@ -8,7 +8,15 @@
     </p>
     <p class="mt-1 max-w-2xl text-navy-500">{{ __('admin.dashboard.roadmap') }}</p>
 
-    <div class="mt-6 grid max-w-3xl grid-cols-2 gap-4">
+    <div class="mt-6 grid max-w-4xl grid-cols-2 gap-4 md:grid-cols-4">
+        <a href="{{ route('admin.schedule') }}" class="card block hover:border-sage">
+            <p class="label !mb-0">{{ __('admin.dashboard.today_visits') }}</p>
+            <p class="mt-1 font-display text-4xl font-semibold">{{ $todayVisits }}</p>
+        </a>
+        <a href="{{ route('admin.timesheets.index', ['status' => 'submitted']) }}" class="card block hover:border-sage">
+            <p class="label !mb-0">{{ __('admin.dashboard.awaiting_approval') }}</p>
+            <p @class(['mt-1 font-display text-4xl font-semibold', 'text-amber' => $awaitingApproval > 0])>{{ $awaitingApproval }}</p>
+        </a>
         <a href="{{ route('admin.staff.index', ['status' => 'active']) }}" class="card block hover:border-sage">
             <p class="label !mb-0">{{ __('admin.dashboard.active_staff') }}</p>
             <p class="mt-1 font-display text-4xl font-semibold">{{ $activeStaff }}</p>
@@ -19,7 +27,25 @@
         </a>
     </div>
 
-    <section class="card mt-6 max-w-3xl">
+    <section class="card mt-6 max-w-4xl">
+        <h2 class="flex items-center gap-2 text-lg"><span class="size-2.5 animate-pulse rounded-full bg-sage"></span> {{ __('admin.dashboard.live_timers') }}</h2>
+        <ul class="mt-3 divide-y divide-sand">
+            @forelse ($running as $entry)
+                <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-[15px]">
+                    <span><strong>{{ $entry->user->name }}</strong> · {{ $entry->appointment->client->display_name }}</span>
+                    <span class="flex items-center gap-3">
+                        @if ($entry->isOverrunning())<span class="badge-alert">{{ __('admin.dashboard.overrunning') }}</span>@endif
+                        <x-job-timer :entry="$entry" size="sm" />
+                        <a href="{{ route('admin.timesheets.edit', $entry) }}" class="text-sm font-semibold underline">{{ __('common.edit') }}</a>
+                    </span>
+                </li>
+            @empty
+                <li class="py-3 text-navy-500">{{ __('admin.dashboard.no_live_timers') }}</li>
+            @endforelse
+        </ul>
+    </section>
+
+    <section class="card mt-6 max-w-4xl">
         <h2 class="text-lg">{{ __('admin.dashboard.recent_activity') }}</h2>
         <ul class="mt-3 divide-y divide-sand">
             @forelse ($recentAudit as $log)

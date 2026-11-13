@@ -11,6 +11,7 @@ return [
         'business.phone' => env('APQ_BUSINESS_PHONE'),
         'display_timezone' => env('APQ_DISPLAY_TIMEZONE', 'Australia/Sydney'),
         'pay_period' => 'fortnightly',
+        'pay_period_anchor' => '2026-01-05',   // a Monday that starts a pay fortnight
         'labour_on_cost_percent' => 12.0,
         'timer.start_early_minutes' => 60,
         'timer.overrun_alert_hours' => 3,

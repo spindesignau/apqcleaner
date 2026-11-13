@@ -26,4 +26,12 @@ return [
         'no_access' => 'Sin acceso',
         'invoiced' => 'Facturada',
     ],
+    'time_entry_status' => [
+        'running' => 'En curso',
+        'stopped' => 'Sin enviar',
+        'submitted' => 'Enviada',
+        'approved' => 'Aprobada',
+        'rejected' => 'Devuelta',
+        'invoiced' => 'Facturada',
+    ],
 ];

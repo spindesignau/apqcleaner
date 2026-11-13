@@ -26,4 +26,12 @@ return [
         'no_access' => 'No access',
         'invoiced' => 'Invoiced',
     ],
+    'time_entry_status' => [
+        'running' => 'Running',
+        'stopped' => 'Not submitted',
+        'submitted' => 'Submitted',
+        'approved' => 'Approved',
+        'rejected' => 'Sent back',
+        'invoiced' => 'Invoiced',
+    ],
 ];
