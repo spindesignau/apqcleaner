@@ -147,6 +147,12 @@ jobs:
             cd '$APP_PATH'
             mkdir -p storage/app/private storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/import bootstrap/cache
             chmod -R ug+rwX storage bootstrap/cache
+            # First deploy: create APP_KEY if .env doesn't have one yet (never replaces an existing key).
+            if ! grep -qE '^APP_KEY=base64:.+' .env; then
+              grep -q '^APP_KEY=' .env || echo 'APP_KEY=' >> .env
+              $PHP_BIN artisan optimize:clear >/dev/null
+              $PHP_BIN artisan key:generate --force
+            fi
             $PHP_BIN artisan migrate --force
             $PHP_BIN artisan storage:link || true
             $PHP_BIN artisan optimize:clear
@@ -159,6 +165,15 @@ jobs:
 
       - name: Smoke test
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' https://apqcleaner.spinstaging.com/up)
-          echo "Health check returned $code"
-          test "$code" = "200"
+          base=https://apqcleaner.spinstaging.com
+          fail=0
+          for path in /up /login; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$base$path")
+            echo "$path → $code"
+            [ "$code" = "200" ] || fail=1
+          done
+          if [ "$fail" = 1 ]; then
+            echo "::error::The site is not healthy. Check ~/apqcleaner/storage/logs/laravel-*.log on the server (see docs/DEPLOY-STAGING.md → Troubleshooting)."
+            ssh staging "cd '$APP_PATH' && ls -t storage/logs/laravel-*.log 2>/dev/null | head -1 | xargs -r tail -n 15 | grep -E 'production\\.ERROR|staging\\.ERROR|local\\.ERROR' | tail -3 | cut -c1-400" || true
+            exit 1
+          fi
