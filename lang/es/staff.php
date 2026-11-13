@@ -13,4 +13,18 @@ return [
     'next_week' => 'Semana siguiente',
     'week_of' => 'Semana del :date',
     'today' => 'Hoy',
+    'job' => [
+        'back' => 'Volver',
+        'address' => 'Dirección',
+        'open_map' => 'Abrir en Mapas',
+        'access' => 'Cómo entrar',
+        'focus' => 'Enfocarse en',
+        'notes' => 'Notas para esta visita',
+        'team' => 'Equipo',
+        'service' => 'Servicio',
+        'call_client' => 'Llamar al cliente',
+        'timer_soon' => 'El cronómetro de inicio/fin llega en la próxima actualización.',
+    ],
+    'view_job' => 'Ver trabajo',
+    'with' => 'Con :names',
 ];

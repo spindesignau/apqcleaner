@@ -234,7 +234,7 @@ Details are in [03-XERO-INTEGRATION.md](03-XERO-INTEGRATION.md).
 |---|---|---|
 | `service_types` | name (en/es), default hourly rate, default fixed price, Xero item code, Xero account code | e.g. *Regular clean*, *Deep clean*, *End of lease*, *Oven*, *Windows*. |
 | `clients` | `pricing_model` (`hourly` / `fixed`), `hourly_rate`, `fixed_price`, `billing_increment_minutes`, `minimum_billable_minutes`, cancellation fee rule | The client's value overrides the service type default. |
-| `users` (staff) | `hourly_rate`, `employment_type` (`casual`, `part_time`, `full_time`, `contractor_abn`) | Used for labour cost and margin reporting. |
+| `users` (staff) | `hourly_rate`, optional `saturday_rate` / `sunday_rate`, `employment_type` (`casual`, `part_time`, `full_time`, `contractor_abn`) | Used for labour cost and margin reporting. A weekend rate falls back to `hourly_rate` when empty. |
 | Rate history | `client_rate_histories`, `staff_rate_histories` (effective_from) | Invoices and reports use the rate in force **on the visit date**. Each time entry also snapshots `charge_rate` and `pay_rate` at approval. |
 
 ### 5.2 Billable minutes

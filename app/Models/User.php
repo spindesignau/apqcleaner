@@ -21,7 +21,7 @@ class User extends Authenticatable
      */
     protected $fillable = ['name', 'email', 'password', 'avatar_path', 'locale'];
 
-    protected $hidden = ['password', 'remember_token', 'hourly_rate', 'notes', 'abn'];
+    protected $hidden = ['password', 'remember_token', 'hourly_rate', 'saturday_rate', 'sunday_rate', 'notes', 'abn'];
 
     protected function casts(): array
     {
@@ -31,6 +31,8 @@ class User extends Authenticatable
             'role' => Role::class,
             'employment_type' => EmploymentType::class,
             'hourly_rate' => 'decimal:2',
+            'saturday_rate' => 'decimal:2',
+            'sunday_rate' => 'decimal:2',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
             'locked_at' => 'datetime',
@@ -59,6 +61,26 @@ class User extends Authenticatable
     {
         return collect(preg_split('/\s+/', trim($this->name)))
             ->filter()->take(2)->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('');
+    }
+
+    public function appointments()
+    {
+        return $this->belongsToMany(Appointment::class, 'appointment_staff')->withPivot('notified_at');
+    }
+
+    /** Pay rate for a given day (ISO weekday 6 = Saturday, 7 = Sunday). */
+    public function payRateFor(\DateTimeInterface $date): ?string
+    {
+        return match ((int) $date->format('N')) {
+            6 => $this->saturday_rate ?? $this->hourly_rate,
+            7 => $this->sunday_rate ?? $this->hourly_rate,
+            default => $this->hourly_rate,
+        };
+    }
+
+    public function scopeAssignable($query)
+    {
+        return $query->where('is_active', true)->orderBy('name');
     }
 
     public function scopeStaff($query)

@@ -6,3 +6,9 @@
         <button type="button" @click="show = false" class="-m-1 p-1 text-offwhite/70 hover:text-offwhite" aria-label="{{ __('common.close') }}">✕</button>
     </div>
 @endif
+@if (session('warning'))
+    <div role="alert" {{ $attributes->class('mt-3 flex items-start gap-3 rounded-2xl border border-amber/30 bg-amber-50 px-4 py-3 text-amber') }}>
+        <span aria-hidden="true">⚠</span>
+        <p class="flex-1 text-[15px] font-medium">{{ session('warning') }}</p>
+    </div>
+@endif

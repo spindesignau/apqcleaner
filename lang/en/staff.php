@@ -13,4 +13,18 @@ return [
     'next_week' => 'Next week',
     'week_of' => 'Week of :date',
     'today' => 'Today',
+    'job' => [
+        'back' => 'Back',
+        'address' => 'Address',
+        'open_map' => 'Open in Maps',
+        'access' => 'How to get in',
+        'focus' => 'Focus on',
+        'notes' => 'Notes for this visit',
+        'team' => 'Team',
+        'service' => 'Service',
+        'call_client' => 'Call client',
+        'timer_soon' => 'Start/stop timer arrives in the next update.',
+    ],
+    'view_job' => 'View job',
+    'with' => 'With :names',
 ];

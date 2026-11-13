@@ -3,45 +3,43 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
-use Carbon\CarbonPeriod;
+use App\Models\Appointment;
+use App\Support\Week;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class WeekController extends Controller
 {
+    /** Staff may browse 4 weeks back and 8 weeks ahead. */
+    private const WEEKS_BACK = 4;
+
+    private const WEEKS_AHEAD = 8;
+
     public function __invoke(Request $request, ?string $week = null): View
     {
-        $tz = config('apq.display_timezone');
-        $now = now($tz);
-
-        $start = $week && preg_match('/^(\d{4})-W(\d{2})$/', $week, $m)
-            ? Carbon::now($tz)->setISODate((int) $m[1], (int) $m[2])->startOfWeek()
-            : $now->copy()->startOfWeek();
-
-        // Staff may browse 4 weeks back and 8 weeks ahead.
-        $min = $now->copy()->startOfWeek()->subWeeks(4);
-        $max = $now->copy()->startOfWeek()->addWeeks(8);
-        if ($start->lt($min) || $start->gt($max)) {
-            return view('staff.week', $this->data($now->copy()->startOfWeek(), $now, $min, $max));
+        $current = Week::fromParam(null);
+        $selected = Week::fromParam($week);
+        $min = $current->start->copy()->subWeeks(self::WEEKS_BACK);
+        $max = $current->start->copy()->addWeeks(self::WEEKS_AHEAD);
+        if ($selected->start->lt($min) || $selected->start->gt($max)) {
+            $selected = $current;
         }
 
-        return view('staff.week', $this->data($start, $now, $min, $max));
-    }
+        $jobs = Appointment::query()
+            ->forStaff($request->user())
+            ->active()
+            ->betweenLocalDates($selected->start, $selected->end)
+            ->with('client')
+            ->orderBy('scheduled_start')
+            ->get();
 
-    private function data(Carbon $start, Carbon $now, Carbon $min, Carbon $max): array
-    {
-        $prev = $start->copy()->subWeek();
-        $next = $start->copy()->addWeek();
-
-        return [
-            'start' => $start,
-            'days' => CarbonPeriod::create($start, 7)->toArray(),
-            'now' => $now,
-            'isThisWeek' => $start->isSameWeek($now),
-            'prevWeek' => $prev->gte($min) ? $prev->format('o-\WW') : null,
-            'nextWeek' => $next->lte($max) ? $next->format('o-\WW') : null,
-            'jobsByDay' => collect(),   // Phase 1: assigned appointments grouped by local date
-        ];
+        return view('staff.week', [
+            'week' => $selected,
+            'days' => $selected->days(),
+            'now' => now(config('apq.display_timezone')),
+            'prevWeek' => $selected->start->copy()->subWeek()->gte($min) ? $selected->previous() : null,
+            'nextWeek' => $selected->start->copy()->addWeek()->lte($max) ? $selected->next() : null,
+            'jobsByDay' => $jobs->groupBy(fn ($a) => $a->localStart()->toDateString()),
+        ]);
     }
 }

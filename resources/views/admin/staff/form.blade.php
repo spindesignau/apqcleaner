@@ -74,6 +74,17 @@
                         </div>
                         <x-field-error name="hourly_rate" />
                     </div>
+                    @foreach (['saturday_rate', 'sunday_rate'] as $field)
+                        <div>
+                            <label for="{{ $field }}" class="label">{{ __('admin.staff.fields.'.$field) }}</label>
+                            <div class="relative">
+                                <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-navy-500">$</span>
+                                <input id="{{ $field }}" name="{{ $field }}" type="number" step="0.01" min="0" inputmode="decimal" value="{{ old($field, $staff->{$field}) }}" class="input pl-8">
+                            </div>
+                            <p class="mt-1 text-sm text-navy-500">{{ __('admin.staff.help.weekend') }}</p>
+                            <x-field-error :name="$field" />
+                        </div>
+                    @endforeach
                     <div>
                         <label for="abn" class="label">{{ __('admin.staff.fields.abn') }}</label>
                         <input id="abn" name="abn" inputmode="numeric" value="{{ old('abn', $staff->abn) }}" placeholder="12 345 678 901" class="input">

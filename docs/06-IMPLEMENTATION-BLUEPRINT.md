@@ -487,7 +487,23 @@ GitHub Actions run Pint, Larastan, Pest and `npm run build`, then deploy over SS
 | **4. Cancellations and SMS** (wk 6) | Countdown chips, cancellation monitor, fee invoices, Mobile Message reminders, webhooks, SMS log | Day-before reminders running live; a fee invoice generated end-to-end |
 | **5. Reports and hardening** (wk 7) | Reports, CSV/PDF exports, backups, audit log UI, PWA install, accessibility pass, load test | Acceptance criteria (spec §9) all pass; go-live |
 
+### 9.1 Progress and design changes
+
+| Phase | Status | Notes |
+|---|---|---|
+| 0. Foundations | ✅ Done | Blade + Alpine only. Livewire is not installed yet, because forms are plain posts. It will be added in Phase 2 for the inline timesheet grid. |
+| 1. Clients and scheduling | ✅ Done | **Price snapshot:** each appointment stores `pricing_model` + `price` when it is created, instead of keeping separate `client_rate_histories`. A price change only affects visits generated afterwards. **No drag-and-drop:** the week board uses edit forms, not drag-and-drop. **Weekend rates:** `users.saturday_rate` / `sunday_rate` (owner confirmed Saturday rates; Sunday rates appear in the planner too). |
+| 2. Timer and timesheets | Next | |
+
 ## 10. Open questions for the owner
+
+Answered 14 Nov 2026:
+- **All** clients are invoiced through Xero, Cash and ABN alike.
+- Clients marked "Cancelled" are not imported.
+- Saturday has its own pay rate.
+
+Still open:
+
 
 1. **Cancellation fee:** is it 50 % of the visit, a flat amount, or the full visit price? Does it apply per client or the same for everyone?
 2. **Billing increments:** bill to the exact minute, or round up to 15 or 30 minutes? Is there a minimum (e.g. 2 h) per visit?

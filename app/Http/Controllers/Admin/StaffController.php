@@ -67,7 +67,7 @@ class StaffController extends Controller
             return back()->withErrors(['role' => __('admin.staff.cannot_demote_self')])->withInput();
         }
 
-        $tracked = ['name', 'email', 'mobile', 'role', 'employment_type', 'hourly_rate', 'abn', 'locale', 'notes'];
+        $tracked = ['name', 'email', 'mobile', 'role', 'employment_type', 'hourly_rate', 'saturday_rate', 'sunday_rate', 'abn', 'locale', 'notes'];
         $before = collect($staff->only($tracked))->map(fn ($v) => $v instanceof \BackedEnum ? $v->value : $v)->all();
 
         $staff->forceFill(collect($data)->except('password')->all());

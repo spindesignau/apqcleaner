@@ -4,6 +4,7 @@ return [
     'app_name' => 'APQ Cleaning Service',
     'language' => 'Idioma',
     'save' => 'Guardar',
+    'edit' => 'Editar',
     'cancel' => 'Cancelar',
     'back' => 'Volver',
     'search' => 'Buscar',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -12,7 +13,14 @@ class TodayController extends Controller
     {
         $today = now(config('apq.display_timezone'));
 
-        // Phase 1 replaces this with the user's assigned appointments for today.
-        return view('staff.today', ['today' => $today, 'jobs' => collect()]);
+        $jobs = Appointment::query()
+            ->forStaff($request->user())
+            ->active()
+            ->betweenLocalDates($today, $today)
+            ->with(['client', 'staff:id,name'])
+            ->orderBy('scheduled_start')
+            ->get();
+
+        return view('staff.today', compact('today', 'jobs'));
     }
 }

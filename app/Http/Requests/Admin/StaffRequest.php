@@ -41,6 +41,8 @@ class StaffRequest extends FormRequest
             'role' => ['required', new Enum(Role::class)],
             'employment_type' => ['required', new Enum(EmploymentType::class)],
             'hourly_rate' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
+            'saturday_rate' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
+            'sunday_rate' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'abn' => ['nullable', 'regex:/^\d{2}\s?\d{3}\s?\d{3}\s?\d{3}$/'],
             'locale' => ['required', Rule::in(array_keys(config('apq.locales')))],
             'notes' => ['nullable', 'string', 'max:5000'],
@@ -55,7 +57,7 @@ class StaffRequest extends FormRequest
 
     public function attributes(): array
     {
-        return collect(['name', 'email', 'mobile', 'role', 'employment_type', 'hourly_rate', 'abn', 'locale', 'notes', 'password'])
+        return collect(['name', 'email', 'mobile', 'role', 'employment_type', 'hourly_rate', 'saturday_rate', 'sunday_rate', 'abn', 'locale', 'notes', 'password'])
             ->mapWithKeys(fn ($f) => [$f => __('admin.staff.fields.'.$f)])->all();
     }
 }

@@ -7,16 +7,21 @@ A mobile-first app for APQ Cleaning Service (Northern Beaches, Sydney) covering 
 ## Status
 
 **Phase 0 (foundations) is done:**
-- APQ brand theme, logo components and PWA icons
-- Branded login, logout and password reset
-- EN/ES switching on every screen, including login
-- Admin and staff roles
-- Instant account lock with force-logout
-- Forced change of temporary passwords
-- Staff profile limited to name, photo, email, password and language
-- Today/Week shells for staff
-- Admin dashboard and staff management
+- APQ brand theme, branded login and password reset
+- EN/ES switching on every screen
+- Admin and staff roles, instant account lock with force-logout
+- Staff profile limited to safe fields
+- Admin staff management
 - Staff import from the Weekly Planner
+
+**Phase 1 (clients and scheduling) is done:**
+- **Clients:** create and edit clients (fixed price per visit by default, Cash/ABN payment type). Access notes and "focus on" notes are shown to assigned cleaners only.
+- **Regular schedules:** weekly, fortnightly, every 3 or 4 weeks, or monthly (nth weekday). The nightly `apq:appointments:generate` command creates visits 8 weeks ahead and keeps 9:00am at 9:00am across daylight saving.
+- **Edits:** editing a schedule rebuilds future visits nobody has touched. Hand-edited visits are kept.
+- **Admin week board:** filter by cleaner, add one-off visits, see unassigned visits, and get double-booking warnings.
+- **Staff screens:** real Today and Week lists, and a job page with address, map link, access instructions and team.
+- **Pay rates:** optional Saturday and Sunday rates per cleaner, falling back to their normal rate.
+- **Client import:** `apq:import:clients` reads the client CSV. It skips rows marked "Cancelled" (`--include-cancelled` imports them as inactive), detects suburbs, normalises phones and flags invalid emails.
 
 The next phases are listed in [docs/06-IMPLEMENTATION-BLUEPRINT.md §9](docs/06-IMPLEMENTATION-BLUEPRINT.md).
 
@@ -50,11 +55,17 @@ Demo accounts:
 php artisan migrate --force && php artisan db:seed --force
 ```
 
-3. Import staff from the Weekly Planner. Without `--commit` it is a dry run:
+3. Import staff and clients. Without `--commit` each command is a dry run:
 
 ```bash
 php artisan apq:import:staff storage/import/weekly-planner.xlsx --commit
 ```
+
+```bash
+php artisan apq:import:clients storage/import/clients.csv --commit
+```
+
+4. In the cPanel cron settings, add `* * * * * php /path/to/artisan schedule:run`. This creates upcoming visits every night.
 
 Real business files go in `storage/import/`, which git ignores.
 

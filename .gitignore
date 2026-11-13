@@ -28,3 +28,6 @@ Thumbs.db
 !/storage/import/.gitignore
 *.xlsx
 *.csv
+
+# Synthetic test fixtures are safe to commit.
+!/tests/fixtures/*.csv
