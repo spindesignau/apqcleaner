@@ -8,6 +8,7 @@ return [
     'cancel' => 'Cancel',
     'back' => 'Back',
     'search' => 'Search',
+    'sign_out_confirm' => 'Sign out of APQ?',
     'sign_out' => 'Sign out',
     'yes' => 'Yes',
     'no' => 'No',

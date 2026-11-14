@@ -8,6 +8,7 @@ return [
     'cancel' => 'Cancelar',
     'back' => 'Volver',
     'search' => 'Buscar',
+    'sign_out_confirm' => '¿Cerrar sesión en APQ?',
     'sign_out' => 'Cerrar sesión',
     'yes' => 'Sí',
     'no' => 'No',

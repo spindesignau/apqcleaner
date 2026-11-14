@@ -8,13 +8,21 @@
     <header class="sticky top-0 z-30 bg-navy pt-[env(safe-area-inset-top)]">
         <div class="mx-auto flex h-16 max-w-md items-center justify-between gap-3 px-4">
             <a href="{{ route('home') }}" aria-label="{{ __('common.app_name') }}">
-                <x-logo variant="dark" class="h-11 w-auto" />
+                <x-logo variant="dark" class="h-10 w-auto shrink-0" />
             </a>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
                 @if (auth()->user()->isAdmin())
-                    <a href="{{ route('admin.dashboard') }}" class="rounded-full border border-offwhite/30 px-3 py-1.5 text-sm font-bold text-offwhite hover:bg-white/10">{{ __('common.admin_view') }}</a>
+                    <a href="{{ route('admin.dashboard') }}" class="rounded-full border border-offwhite/30 px-2.5 py-1.5 text-sm font-bold text-offwhite hover:bg-white/10">{{ __('common.admin_view') }}</a>
                 @endif
                 <x-lang-pill tone="dark" />
+                <form method="POST" action="{{ route('logout') }}" x-data
+                      @submit="if (! confirm(@js(__('common.sign_out_confirm')))) $event.preventDefault()">
+                    @csrf
+                    <button type="submit" class="flex size-11 items-center justify-center rounded-full border border-offwhite/30 text-offwhite hover:bg-white/10"
+                            aria-label="{{ __('common.sign_out') }}" title="{{ __('common.sign_out') }}">
+                        <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/></svg>
+                    </button>
+                </form>
             </div>
         </div>
         @php $running = auth()->user()->runningEntry(); @endphp
