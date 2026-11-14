@@ -1,6 +1,8 @@
 @php $today = now(config('apq.display_timezone'))->toDateString(); @endphp
 <x-layouts.admin :title="__('schedule.board_title')">
     <x-slot:actions>
+        <a href="{{ route('admin.schedule.template') }}" class="hidden text-sm font-semibold underline md:inline">⇩ {{ __('schedule_import.download') }}</a>
+        <a href="{{ route('admin.schedule.import', array_filter(['cleaner' => $staffId])) }}" class="btn-secondary btn-sm hidden sm:inline-flex">⇪ {{ __('schedule_import.button') }}</a>
         <a href="{{ route('admin.appointments.create') }}" class="btn-primary btn-sm hidden sm:inline-flex">+ {{ __('schedule.add_visit') }}</a>
     </x-slot:actions>
 
@@ -77,5 +79,8 @@
             </section>
         @endforeach
     </div>
-    <a href="{{ route('admin.appointments.create') }}" class="btn-primary mt-5 sm:hidden">+ {{ __('schedule.add_visit') }}</a>
+    <div class="mt-5 grid gap-2 sm:hidden">
+        <a href="{{ route('admin.appointments.create') }}" class="btn-primary">+ {{ __('schedule.add_visit') }}</a>
+        <a href="{{ route('admin.schedule.import', array_filter(['cleaner' => $staffId])) }}" class="btn-secondary">⇪ {{ __('schedule_import.button') }}</a>
+    </div>
 </x-layouts.admin>

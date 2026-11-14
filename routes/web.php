@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\RecurringScheduleController;
 use App\Http\Controllers\Admin\ScheduleBoardController;
+use App\Http\Controllers\Admin\ScheduleImportController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\TimesheetController;
 use App\Http\Controllers\Admin\XeroController;
@@ -79,6 +80,12 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::delete('/schedules/{schedule}', [RecurringScheduleController::class, 'destroy'])->name('schedules.destroy');
 
             Route::get('/schedule', ScheduleBoardController::class)->name('schedule');
+            Route::get('/schedule/template', [ScheduleImportController::class, 'template'])->name('schedule.template');
+            Route::get('/schedule/import', [ScheduleImportController::class, 'create'])->name('schedule.import');
+            Route::post('/schedule/import', [ScheduleImportController::class, 'upload'])->name('schedule.import.upload');
+            Route::get('/schedule/import/preview', [ScheduleImportController::class, 'preview'])->name('schedule.import.preview');
+            Route::post('/schedule/import/confirm', [ScheduleImportController::class, 'confirm'])->name('schedule.import.confirm');
+            Route::post('/schedule/import/cancel', [ScheduleImportController::class, 'cancel'])->name('schedule.import.cancel');
             Route::resource('appointments', AppointmentController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
 
             Route::get('/timesheets', [TimesheetController::class, 'index'])->name('timesheets.index');

@@ -4,7 +4,7 @@ namespace App\Services\Scheduling;
 
 use App\Models\Appointment;
 use App\Models\User;
-use Illuminate\Support\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 /**
@@ -16,7 +16,7 @@ class ConflictFinder
      * @param  int[]  $staffIds
      * @return Collection<int, array{user: User, appointment: Appointment}>
      */
-    public function forSlot(array $staffIds, Carbon $start, Carbon $end, ?int $ignoreId = null): Collection
+    public function forSlot(array $staffIds, CarbonInterface $start, CarbonInterface $end, ?int $ignoreId = null): Collection
     {
         if ($staffIds === []) {
             return collect();
