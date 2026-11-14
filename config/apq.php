@@ -37,6 +37,12 @@ return [
         'locale' => env('APQ_ADMIN_LOCALE', 'en'),
     ],
 
+    'backups' => [
+        'keep_days' => (int) env('APQ_BACKUP_KEEP_DAYS', 30),
+        // auto = mysqldump when available, else the built-in exporter; php = always the built-in exporter.
+        'method' => env('APQ_BACKUP_METHOD', 'auto'),
+    ],
+
     'avatars' => [
         'disk' => 'local',
         'directory' => 'avatars',

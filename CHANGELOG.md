@@ -2,6 +2,22 @@
 
 Changes are listed newest first. This page is visible to administrators only.
 
+## [0.7.0] – 14 November 2026
+
+### New
+- **Reports** (menu → Reports). Each one has date presets (pay period, month, financial year), a CSV export and Print / PDF:
+  - **Revenue by client:** visits, billable hours, cleaning revenue and cancellation fees, with GST.
+  - **Staff hours & pay:** weekday, Saturday and Sunday hours per cleaner, pay at the locked-in rates, and on-costs. Tick *One line per shift* for a payroll export.
+  - **Margin by client:** revenue minus labour, lowest first, to spot under-priced clients.
+  - **Scheduled vs actual time:** which clients' visits keep running over.
+  - **Cancellations, SMS usage, and Invoices & Xero.**
+- **Settings page** with **System status**: warns if the cPanel cron job stops, which would stop visits, reminders, invoices and backups. The dashboard shows a red banner if that happens.
+- **Nightly database backups** (kept 30 days), with **Back up now** and **Download** under Settings → Backups.
+- **Live-site deploys** are prepared. They only run when started by hand, never automatically.
+
+### Improved
+- Tested on MariaDB (the database the hosting uses) as well as for development.
+
 ## [0.6.1] – 14 November 2026
 
 ### Improved

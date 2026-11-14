@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\XeroConnection;
+use App\Services\SystemStatus;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -25,6 +26,7 @@ class DashboardController extends Controller
             'uninvoiced' => TimeEntry::where('status', TimeEntryStatus::Approved->value)->whereNull('invoice_line_id')->where('is_legacy', false)->count(),
             'failedInvoices' => Invoice::where('sync_status', Invoice::SYNC_FAILED)->count(),
             'xeroConnected' => (bool) XeroConnection::current(),
+            'systemProblems' => app(SystemStatus::class)->problems(),
             'recentAudit' => AuditLog::with('user')->latest('created_at')->limit(8)->get(),
         ]);
     }

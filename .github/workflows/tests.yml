@@ -7,12 +7,35 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, mariadb]
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_DATABASE: apq_test
+          MARIADB_USER: apq
+          MARIADB_PASSWORD: apq-test-pass
+          MARIADB_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_CONNECTION: ${{ matrix.database == 'mariadb' && 'mariadb' || 'sqlite' }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: ${{ matrix.database == 'mariadb' && 'apq_test' || ':memory:' }}
+      DB_USERNAME: apq
+      DB_PASSWORD: apq-test-pass
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, intl, bcmath, gd, exif, zip, pdo_sqlite
+          extensions: mbstring, intl, bcmath, gd, exif, zip, pdo_sqlite, pdo_mysql
           coverage: none
       - uses: actions/setup-node@v4
         with:

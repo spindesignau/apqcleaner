@@ -496,7 +496,7 @@ GitHub Actions run Pint, Larastan, Pest and `npm run build`, then deploy over SS
 | 2. Timer and timesheets | ✅ Done | **No Livewire:** the admin grid uses plain forms (bulk approve plus an edit page per entry), not inline editing. **No end-of-day auto-stop job:** the watchdog runs every 15 minutes and auto-stops timers from a previous day. **No overrun SMS yet:** long-running timers show on the dashboard; the SMS nudge comes in Phase 4. **Pay periods:** fortnights are counted from the `pay_period_anchor` setting (Mon 5 Jan 2026). |
 | 3. Xero | ✅ Done | **No SDK:** Xero's REST API is called through Laravel's HTTP client. **No `Bus::batch`:** invoice runs dispatch one queued job per invoice and show progress by polling. **Contact matching:** automatic (by email, then name, else create); there is no manual contact picker yet. |
 | 4. Cancellations & SMS | ✅ Done | **Mobile Message request format checked** against their live API docs (14 Nov 2026). **Cancellation fees** are always a separate invoice (no "add to next invoice" option). **No overrun SMS nudge to cleaners** yet; overruns show on the dashboard. **No SMS balance check** command. |
-| 5. Reports & launch | Next | |
+| 5. Reports & launch | ✅ Done | **PDFs:** browser print/PDF with a print stylesheet, not dompdf. **Backups:** the built-in `apq:backup` (mysqldump or a PHP exporter) replaces spatie/laravel-backup; downloads give an off-server copy. **Live site:** `deploy-production.yml` plus [LAUNCH.md](LAUNCH.md). **Verified on MariaDB 10.11:** CI tests both MariaDB and SQLite. |
 
 ## 10. Open questions for the owner
 

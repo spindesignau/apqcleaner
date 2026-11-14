@@ -69,6 +69,8 @@ return [
         'sms.settings_updated' => ':actor changed the SMS settings',
         'sms.template_updated' => ':actor edited an SMS template',
         'client.sms_opted_out' => ':subject replied STOP to SMS',
+        'system.backup' => 'A database backup was made',
+        'system.backup_downloaded' => ':actor downloaded a backup',
         'system' => 'System',
     ],
     'staff' => [

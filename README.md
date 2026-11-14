@@ -49,6 +49,14 @@ A mobile-first app for APQ Cleaning Service (Northern Beaches, Sydney) covering 
 - **Test mode:** with `SMS_ENABLED=false`, messages are logged only.
 - **What's new:** an admin-only changelog (`CHANGELOG.md`), linked at the bottom left of the admin menu.
 
+**Phase 5 (reports, backups and launch preparation) is done:**
+- **Reports:** revenue, payroll (weekday/Sat/Sun with on-costs, plus a shift-by-shift export), margin, scheduled vs actual, cancellations, SMS and invoices. Each has CSV export and print/PDF.
+- **Backups:** `apq:backup` runs nightly. It uses mysqldump or a built-in exporter, keeps 30 days, and both methods are restore-tested on MariaDB. There is a backup list with download under Settings.
+- **System status:** a scheduler heartbeat, queue backlog, failed jobs, backup age, and the Xero/SMS/debug state, with a dashboard banner if the cron stops.
+- **Live deploys:** `deploy-production` runs only when started by hand or on a `v*` tag.
+- **CI:** tests run on both SQLite and MariaDB 10.11.
+- **Launch:** follow [docs/LAUNCH.md](docs/LAUNCH.md).
+
 The next phases are listed in [docs/06-IMPLEMENTATION-BLUEPRINT.md §9](docs/06-IMPLEMENTATION-BLUEPRINT.md).
 
 ## Local setup

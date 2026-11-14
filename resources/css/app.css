@@ -110,3 +110,11 @@
 @media (prefers-reduced-motion: reduce) {
     .animate-pulse { animation: none; }
 }
+
+/* Reports print cleanly: no sidebar or controls, full width. */
+@media print {
+    [data-print-hide], .print\:hidden { display: none !important; }
+    .lg\:pl-72 { padding-left: 0 !important; }
+    body, html { background: #fff !important; }
+    header.sticky { position: static !important; border: 0 !important; }
+}

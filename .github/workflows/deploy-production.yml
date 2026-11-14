@@ -1,0 +1,189 @@
+name: deploy-production
+
+# Production deploy — same steps as staging, separate PRODUCTION_* secrets.
+# Runs only when started by hand (Actions → deploy-production → Run workflow) or when a release tag (v*) is pushed.
+# Nothing deploys until the repository variable PRODUCTION_ENABLED is "true". See docs/LAUNCH.md.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, bcmath, gd, exif, zip, pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: npm ci && npm run build
+      - run: cp .env.example .env && php artisan key:generate
+      - run: ./vendor/bin/pint --test
+      - run: php artisan apq:lang:check
+      - run: php artisan test
+
+  deploy:
+    needs: test
+    if: vars.PRODUCTION_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    env:
+      PHP_BIN: ${{ vars.PRODUCTION_PHP_BIN || 'php' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read connection settings
+        env:
+          RAW_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          RAW_PORT: ${{ secrets.PRODUCTION_SSH_PORT }}
+          RAW_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+          RAW_PATH: ${{ secrets.PRODUCTION_APP_PATH }}
+        run: |
+          trim() { printf '%s' "$1" | tr -d '\r\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g'; }
+          {
+            echo "SSH_HOST=$(trim "$RAW_HOST")"
+            echo "SSH_PORT=$(trim "${RAW_PORT:-22}")"
+            echo "SSH_USER=$(trim "$RAW_USER")"
+            echo "APP_PATH=$(trim "$RAW_PATH" | sed 's:/*$::')"
+          } >> "$GITHUB_ENV"
+          for v in RAW_HOST RAW_USER RAW_PATH; do
+            [ -n "$(trim "${!v}")" ] || { echo "::error::A required PRODUCTION_SSH_HOST / PRODUCTION_SSH_USER / PRODUCTION_APP_PATH secret is empty"; exit 1; }
+          done
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, bcmath, gd, exif, zip
+          coverage: none
+      - name: Install PHP dependencies (production)
+        run: composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Build front-end assets
+        run: npm ci && npm run build
+
+      - name: Configure SSH
+        id: ssh
+        env:
+          SSH_PASSPHRASE: ${{ secrets.PRODUCTION_SSH_PASSPHRASE }}
+          KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.PRODUCTION_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # cPanel-generated keys require a passphrase: unlock the runner's throwaway copy so ssh/rsync run non-interactively.
+          if [ -n "$SSH_PASSPHRASE" ]; then
+            ssh-keygen -p -q -P "$SSH_PASSPHRASE" -N "" -f ~/.ssh/deploy_key >/dev/null \
+              || { echo "::error::Could not unlock PRODUCTION_SSH_KEY — check PRODUCTION_SSH_PASSPHRASE"; exit 1; }
+          fi
+
+          # Pinned host keys. Take every "<host> <type> <key>" line (plain, [host]:port or hashed |1|…),
+          # keep only the key, and pin it under the alias "staging-server". The host spelling no longer matters;
+          # SSH still refuses to connect unless the server presents one of these exact keys.
+          printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' \
+            | awk '$0 !~ /^[[:space:]]*#/ && NF >= 3 && $2 ~ /^(ssh-|ecdsa-|sk-)/ { print "staging-server", $2, $3 }' \
+            > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          if [ ! -s ~/.ssh/known_hosts ]; then
+            echo "::error::No host keys found in PRODUCTION_SSH_KNOWN_HOSTS. On your computer run: ssh-keyscan -p $SSH_PORT <server> and paste ALL of its output (lines containing ssh-ed25519 / ssh-rsa / ecdsa-…)."
+            exit 1
+          fi
+          echo "Pinned host key types: $(cut -d' ' -f2 ~/.ssh/known_hosts | sort -u | tr '\n' ' ')"
+
+          cat > ~/.ssh/config <<CFG
+          Host staging
+            HostName $SSH_HOST
+            Port $SSH_PORT
+            User $SSH_USER
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            HostKeyAlias staging-server
+            StrictHostKeyChecking yes
+            ConnectTimeout 20
+          CFG
+
+          if ! ssh staging true; then
+            echo "::error::SSH connection failed (see the message above). 'Host key verification failed' → the keys in PRODUCTION_SSH_KNOWN_HOSTS are not this server's (re-run ssh-keyscan -p $SSH_PORT). 'Permission denied' → authorize the key in cPanel and check PRODUCTION_SSH_USER."
+            exit 1
+          fi
+          ssh staging "test -f '$APP_PATH/.env'" \
+            || { echo "::error::Connected, but $APP_PATH/.env does not exist — see docs/LAUNCH.md"; exit 1; }
+
+          # Check .env can be read BEFORE touching the live site (an unquoted value with spaces breaks every page).
+          if ssh staging "test -f '$APP_PATH/artisan'"; then
+            if ! out=$(ssh staging "cd '$APP_PATH' && $PHP_BIN artisan --version 2>&1"); then
+              echo "$out" | tail -n 3
+              echo "::error::The server's .env can't be read — usually a value with spaces, # or \$ that isn't in \"double quotes\". Fix ~/apqcleaner/.env and run the deploy again. The live site was not changed."
+              exit 1
+            fi
+          fi
+
+      - name: Maintenance mode on
+        run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan down --retry=30 --refresh=15 || true"
+
+      - name: Package release
+        run: |
+          # rsync runs only here on GitHub's runner (to apply the exclude list); the server needs just tar.
+          mkdir -p "$RUNNER_TEMP/release"
+          rsync -a --exclude-from=.github/deploy-exclude.txt ./ "$RUNNER_TEMP/release/"
+          tar -C "$RUNNER_TEMP/release" -czf "$RUNNER_TEMP/release.tar.gz" .
+          du -h "$RUNNER_TEMP/release.tar.gz"
+
+      - name: Upload and install
+        run: |
+          ssh staging "mkdir -p '$APP_PATH/.deploy' && cat > '$APP_PATH/.deploy/release.tar.gz'" < "$RUNNER_TEMP/release.tar.gz"
+          ssh staging "bash -s -- '$APP_PATH'" < .github/scripts/install-release.sh
+
+      - name: Migrate and warm caches
+        run: |
+          ssh staging "set -e
+            cd '$APP_PATH'
+            mkdir -p storage/app/private storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/import bootstrap/cache
+            chmod -R ug+rwX storage bootstrap/cache
+            # First deploy: create APP_KEY if .env doesn't have one yet (never replaces an existing key).
+            if ! grep -qE '^APP_KEY=base64:.+' .env; then
+              grep -q '^APP_KEY=' .env || echo 'APP_KEY=' >> .env
+              $PHP_BIN artisan optimize:clear >/dev/null
+              $PHP_BIN artisan key:generate --force
+            fi
+            $PHP_BIN artisan migrate --force
+            $PHP_BIN artisan storage:link || true
+            $PHP_BIN artisan optimize:clear
+            $PHP_BIN artisan optimize
+            $PHP_BIN artisan queue:restart"
+
+      - name: Maintenance mode off
+        if: always() && steps.ssh.outcome == 'success'
+        run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan up || true"
+
+      - name: Smoke test
+        run: |
+          base=${{ vars.PRODUCTION_URL }}
+          fail=0
+          for path in /up /login; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$base$path")
+            echo "$path → $code"
+            [ "$code" = "200" ] || fail=1
+          done
+          if [ "$fail" = 1 ]; then
+            echo "::error::The site is not healthy. Check ~/apqcleaner/storage/logs/laravel-*.log on the server (see docs/DEPLOY-STAGING.md → Troubleshooting)."
+            ssh staging "cd '$APP_PATH' && ls -t storage/logs/laravel-*.log 2>/dev/null | head -1 | xargs -r tail -n 15 | grep -E 'production\\.ERROR|staging\\.ERROR|local\\.ERROR' | tail -3 | cut -c1-400" || true
+            exit 1
+          fi

@@ -8,6 +8,9 @@
     </p>
     <p class="mt-1 max-w-2xl text-navy-500">{{ __('admin.dashboard.roadmap') }}</p>
 
+    @if ($systemProblems)
+        <p class="mt-4 max-w-4xl rounded-xl bg-alert-50 px-4 py-3 font-medium text-alert">⚠ {{ __('system.banner', ['list' => collect($systemProblems)->map(fn ($k) => __('system.checks.'.$k))->implode(', ')]) }} <a class="underline" href="{{ route('admin.settings') }}">{{ __('system.title') }} ›</a></p>
+    @endif
     @unless ($xeroConnected)
         <p class="mt-4 max-w-4xl rounded-xl bg-amber-50 px-4 py-3 font-medium text-amber">⚠ {{ __('admin.dashboard.xero_disconnected') }} <a class="underline" href="{{ route('admin.xero.show') }}">{{ __('xero.connect') }} ›</a></p>
     @endunless

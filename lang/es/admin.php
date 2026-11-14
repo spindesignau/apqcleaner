@@ -69,6 +69,8 @@ return [
         'sms.settings_updated' => ':actor cambió la configuración de SMS',
         'sms.template_updated' => ':actor editó una plantilla de SMS',
         'client.sms_opted_out' => ':subject respondió STOP a los SMS',
+        'system.backup' => 'Se hizo una copia de seguridad',
+        'system.backup_downloaded' => ':actor descargó una copia de seguridad',
         'system' => 'Sistema',
     ],
     'staff' => [

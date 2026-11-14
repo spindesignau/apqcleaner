@@ -9,8 +9,8 @@
         ['admin.invoices.index', 'admin.invoices.*', 'invoices', 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2Z'],
         ['admin.cancellations.index', 'admin.cancellations.*', 'cancellations', 'M6 18 18 6M6 6l12 12'],
         ['admin.sms.index', 'admin.sms.*', 'sms', 'M8 10h8m-8 4h5m-9 6 3-3h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14Z'],
-        [null, null, 'reports', 'M9 19v-6m4 6V9m4 10V5M5 19v-2'],
-        ['admin.xero.show', 'admin.xero.*', 'settings', 'M10.3 4.3c.4-1.7 3-1.7 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.5 1.8 3 0 3.5a1.7 1.7 0 0 0-1 2.5c.9 1.6-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.8-2.4-2.4a1.7 1.7 0 0 0-1-2.5c-1.8-.5-1.8-3 0-3.5a1.7 1.7 0 0 0 1-2.5c-.9-1.6.9-3.3 2.4-2.4a1.7 1.7 0 0 0 2.6-1ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'],
+        ['admin.reports.index', 'admin.reports.*', 'reports', 'M9 19v-6m4 6V9m4 10V5M5 19v-2'],
+        ['admin.settings', 'admin.settings*', 'settings', 'M10.3 4.3c.4-1.7 3-1.7 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.5 1.8 3 0 3.5a1.7 1.7 0 0 0-1 2.5c.9 1.6-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.8-2.4-2.4a1.7 1.7 0 0 0-1-2.5c-1.8-.5-1.8-3 0-3.5a1.7 1.7 0 0 0 1-2.5c-.9-1.6.9-3.3 2.4-2.4a1.7 1.7 0 0 0 2.6-1ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'],
     ];
 @endphp
 <!DOCTYPE html>
@@ -21,7 +21,7 @@
 <body class="min-h-dvh bg-canvas" x-data="{ menu: false }" @keydown.escape="menu = false">
     {{-- Sidebar (desktop) / slide-over (mobile) --}}
     <div x-show="menu" x-cloak x-transition.opacity class="fixed inset-0 z-40 bg-navy/50 lg:hidden" @click="menu = false"></div>
-    <aside :class="menu ? 'translate-x-0' : '-translate-x-full'"
+    <aside :class="menu ? 'translate-x-0' : '-translate-x-full'" data-print-hide
            class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-navy pt-[env(safe-area-inset-top)] text-offwhite transition-transform lg:translate-x-0">
         <div class="flex h-24 items-center px-6">
             <a href="{{ route('admin.dashboard') }}"><x-logo variant="dark" class="h-16 w-auto" /></a>

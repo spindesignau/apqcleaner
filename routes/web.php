@@ -8,8 +8,10 @@ use App\Http\Controllers\Admin\ClientImportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\RecurringScheduleController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleBoardController;
 use App\Http\Controllers\Admin\ScheduleImportController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SmsController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\TimesheetController;
@@ -123,6 +125,13 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post('/sms/check', [SmsController::class, 'checkAccount'])->name('sms.check');
             Route::put('/sms/templates/{template}', [SmsController::class, 'updateTemplate'])->name('sms.templates.update');
             Route::post('/clients/{client}/sms', [SmsController::class, 'sendToClient'])->name('clients.sms');
+
+            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+            Route::get('/reports/{report}', [ReportController::class, 'show'])->name('reports.show');
+
+            Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+            Route::post('/settings/backup', [SettingsController::class, 'backupNow'])->name('settings.backup');
+            Route::get('/settings/backups/{name}', [SettingsController::class, 'download'])->name('settings.backup.download');
 
             Route::get('/xero', [XeroController::class, 'show'])->name('xero.show');
             Route::post('/xero/connect', [XeroController::class, 'connect'])->name('xero.connect');
