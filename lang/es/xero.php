@@ -47,4 +47,5 @@ return [
     'server_error' => 'Xero tuvo un problema (HTTP :status). Se reintentará automáticamente.',
     'unknown_error' => 'Xero no aceptó la factura.',
     'contact_failed' => 'Xero no pudo crear el contacto.',
+    'unexpected' => 'La conexión con Xero falló inesperadamente (:error). Los detalles están en el registro del servidor.',
 ];

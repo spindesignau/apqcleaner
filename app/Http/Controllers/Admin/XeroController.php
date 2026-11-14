@@ -54,6 +54,11 @@ class XeroController extends Controller
             $connection = $auth->connect((string) $request->query('code'), $request->user());
         } catch (XeroException $e) {
             return redirect()->route('admin.xero.show')->withErrors(['xero' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            // Anything unexpected (network, database, decryption…): log it and explain instead of a blank 500.
+            report($e);
+
+            return redirect()->route('admin.xero.show')->withErrors(['xero' => __('xero.unexpected', ['error' => class_basename($e).': '.mb_substr($e->getMessage(), 0, 200)])]);
         }
         Audit::log('xero.connected', $connection, after: ['organisation' => $connection->tenant_name]);
 
@@ -78,6 +83,10 @@ class XeroController extends Controller
             $accounts = collect($xero->get('Accounts')['Accounts'] ?? [])->keyBy('Code');
         } catch (XeroException $e) {
             return back()->withErrors(['xero' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['xero' => __('xero.unexpected', ['error' => class_basename($e).': '.mb_substr($e->getMessage(), 0, 200)])]);
         }
 
         $problems = [];

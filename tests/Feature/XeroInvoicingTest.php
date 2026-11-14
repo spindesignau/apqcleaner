@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\XeroConnection;
 use App\Services\Xero\XeroContacts;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -84,6 +85,16 @@ class XeroInvoicingTest extends TestCase
         $this->assertSame('AT', $c->access_token);
         $this->assertNotSame('AT', $c->getRawOriginal('access_token'));   // encrypted at rest
         Http::assertSent(fn (Request $r) => str_contains($r->url(), 'connect/token') && $r['grant_type'] === 'authorization_code' && $r->hasHeader('Authorization'));
+    }
+
+    public function test_unexpected_failure_during_connect_shows_message_not_500(): void
+    {
+        Http::fake(['identity.xero.com/connect/token' => fn () => throw new ConnectionException('cURL error 28: timed out')]);
+
+        $this->actingAs($this->admin)->withSession(['xero_oauth_state' => 'st'])
+            ->get(route('admin.xero.callback', ['code' => 'abc', 'state' => 'st']))
+            ->assertRedirect(route('admin.xero.show'))
+            ->assertSessionHasErrors(['xero' => __('xero.unexpected', ['error' => 'ConnectionException: cURL error 28: timed out'])]);
     }
 
     public function test_expired_token_is_refreshed_before_api_call(): void

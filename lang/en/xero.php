@@ -47,4 +47,5 @@ return [
     'server_error' => 'Xero had a problem (HTTP :status). It will be retried automatically.',
     'unknown_error' => 'Xero did not accept the invoice.',
     'contact_failed' => 'Xero could not create the contact.',
+    'unexpected' => 'Xero connection failed unexpectedly (:error). The details are in the server log.',
 ];
