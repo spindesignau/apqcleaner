@@ -48,6 +48,14 @@
                 @endforeach
             </ul>
         </nav>
+        {{-- Admin-only "What's new" link (this layout is used only behind the admin role check). --}}
+        @php $appVersion = app(\App\Support\Changelog::class)->version(); @endphp
+        <a href="{{ route('admin.changelog') }}"
+           @class(['mx-3 mb-2 flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold hover:bg-white/5',
+                   'bg-white/10 text-white' => request()->routeIs('admin.changelog'), 'text-offwhite/60 hover:text-white' => ! request()->routeIs('admin.changelog')])>
+            <span>✦ {{ __('admin.changelog.link') }}</span>
+            @if ($appVersion)<span class="font-mono text-offwhite/50">v{{ $appVersion }}</span>@endif
+        </a>
         <div class="border-t border-white/10 p-4">
             <div class="flex items-center gap-3">
                 <x-avatar :user="auth()->user()" size="sm" />

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AppointmentController;
+use App\Http\Controllers\Admin\ChangelogController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\ClientImportController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -63,6 +64,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         // Admin
         Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
             Route::get('/', DashboardController::class)->name('dashboard');
+            Route::get('/changelog', ChangelogController::class)->name('changelog');
             Route::resource('staff', StaffController::class)->except(['show', 'destroy'])->parameters(['staff' => 'staff']);
             Route::post('/staff/{staff}/lock', [StaffController::class, 'lock'])->name('staff.lock');
             Route::post('/staff/{staff}/unlock', [StaffController::class, 'unlock'])->name('staff.unlock');

@@ -13,6 +13,7 @@ return [
         'reports' => 'Informes',
         'settings' => 'Configuración',
     ],
+    'changelog' => ['title' => 'Novedades', 'link' => 'Novedades'],
     'dashboard' => [
         'title' => 'Panel',
         'greeting' => 'Buenas :period, :name',

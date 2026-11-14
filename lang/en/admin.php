@@ -13,6 +13,7 @@ return [
         'reports' => 'Reports',
         'settings' => 'Settings',
     ],
+    'changelog' => ['title' => "What's new", 'link' => "What's new"],
     'dashboard' => [
         'title' => 'Dashboard',
         'greeting' => 'Good :period, :name',
