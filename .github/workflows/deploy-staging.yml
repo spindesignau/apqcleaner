@@ -125,6 +125,15 @@ jobs:
           ssh staging "test -f '$APP_PATH/.env'" \
             || { echo "::error::Connected, but $APP_PATH/.env does not exist — see docs/DEPLOY-STAGING.md step 5"; exit 1; }
 
+          # Check .env can be read BEFORE touching the live site (an unquoted value with spaces breaks every page).
+          if ssh staging "test -f '$APP_PATH/artisan'"; then
+            if ! out=$(ssh staging "cd '$APP_PATH' && $PHP_BIN artisan --version 2>&1"); then
+              echo "$out" | tail -n 3
+              echo "::error::The server's .env can't be read — usually a value with spaces, # or \$ that isn't in \"double quotes\". Fix ~/apqcleaner/.env and run the deploy again. The live site was not changed."
+              exit 1
+            fi
+          fi
+
       - name: Maintenance mode on
         run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan down --retry=30 --refresh=15 || true"
 
