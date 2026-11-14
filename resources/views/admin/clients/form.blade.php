@@ -117,6 +117,15 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="sm:col-span-2">
+                    <label for="invoice_frequency" class="label">{{ __('clients.fields.invoice_frequency') }}</label>
+                    <select id="invoice_frequency" name="invoice_frequency" class="input sm:max-w-xs">
+                        @foreach (['per_visit', 'weekly', 'fortnightly', 'monthly'] as $f)
+                            <option value="{{ $f }}" @selected(old('invoice_frequency', $client->invoice_frequency ?? 'monthly') === $f)>{{ __('invoices.frequencies.'.$f) }}</option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-sm text-navy-500">{{ __('clients.help.invoice_frequency') }}</p>
+                </div>
                 <fieldset class="sm:col-span-2">
                     <legend class="label">{{ __('clients.fields.pricing_model') }}</legend>
                     <div class="grid grid-cols-2 gap-2">

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Library** | `xeroapi/xero-php-oauth2` (official Xero PHP SDK) + `league/oauth2-client` (`GenericProvider`) for the auth-code flow |
+| **Library** | Built (Phase 3): Xero's REST API called directly with Laravel's HTTP client (`app/Services/Xero`), not the PHP SDK. There are fewer dependencies on cPanel, and every Xero call is faked in tests (`tests/Feature/XeroInvoicingTest.php`). The code samples below show the original SDK-based design; the request shapes are the same. |
 | **App type** | Xero "Web app" (auth code flow, confidential client) registered at developer.xero.com |
 | **Redirect URI** | `https://<app-domain>/admin/xero/callback` |
 | **Tenancy** | Single organisation (APQ's Xero file). The first connected tenant is stored. Multiple tenants are rejected with a message. |

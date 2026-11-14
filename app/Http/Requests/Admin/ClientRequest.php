@@ -24,6 +24,7 @@ class ClientRequest extends FormRequest
             'show_phone_to_staff' => $this->boolean('show_phone_to_staff'),
             'is_active' => $this->boolean('is_active'),
             'billing_name' => $this->input('billing_name') ?: $this->input('display_name'),
+            'invoice_frequency' => $this->input('invoice_frequency') ?: 'monthly',
         ]);
     }
 
@@ -49,6 +50,7 @@ class ClientRequest extends FormRequest
             'fixed_price' => ['nullable', 'required_if:pricing_model,fixed', 'numeric', 'min:0', 'max:99999'],
             'hourly_rate' => ['nullable', 'required_if:pricing_model,hourly', 'numeric', 'min:0', 'max:999'],
             'payment_method' => ['required', new Enum(PaymentMethod::class)],
+            'invoice_frequency' => ['nullable', Rule::in(['per_visit', 'weekly', 'fortnightly', 'monthly'])],
             'referral_source' => ['nullable', 'string', 'max:150'],
             'preferred_language' => ['required', Rule::in(array_keys(config('apq.locales')))],
             'sms_opt_in' => ['boolean'],

@@ -108,6 +108,11 @@ LOG_CHANNEL=daily
 MAIL_MAILER=log
 
 APQ_DISPLAY_TIMEZONE=Australia/Sydney
+
+# Xero app (developer.xero.com → your app → Configuration)
+XERO_CLIENT_ID=
+XERO_CLIENT_SECRET=
+XERO_WEBHOOK_KEY=
 APQ_ADMIN_EMAIL=you@example.com
 APQ_ADMIN_NAME="Adriana Palacio"
 ```

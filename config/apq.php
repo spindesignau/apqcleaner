@@ -16,6 +16,12 @@ return [
         'timer.start_early_minutes' => 60,
         'timer.overrun_alert_hours' => 3,
         'notify_staff_on_cancel' => true,
+        'xero.default_account_code' => '200',      // Sales
+        'xero.cancellation_account_code' => '260', // Other Revenue
+        'xero.payment_terms_days' => 7,
+        'xero.default_mode' => 'draft',            // draft | authorised
+        'xero.email_by_default' => false,
+        'xero.branding_theme_id' => null,
     ],
 
     // First administrator, created by `php artisan db:seed` (read via config so it works with config:cache).

@@ -32,6 +32,12 @@ A mobile-first app for APQ Cleaning Service (Northern Beaches, Sydney) covering 
 - **Approval:** freezes the visit price and the cleaner's pay rate for that day (Saturday/Sunday rates applied).
 - **Dashboard:** visits today, awaiting approval, and live timers with "running long" alerts.
 
+**Phase 3 (Xero invoicing) is done:**
+- **Connecting Xero:** admins connect it with OAuth 2.0. Tokens are encrypted and refresh automatically, with a weekly keep-alive. **Test connection** checks the organisation and the account codes.
+- **Invoice runs:** pick a period and preview per client, with warnings for unapproved time, missing prices and missing emails. Then create invoices as Draft or Approved, optionally emailed through Xero. One line per visit (fixed price, or hourly × billable time), GST exclusive plus 10% GST, and per-visit clients get one invoice per visit.
+- **Locking and retries:** invoiced timesheets are locked. Pushes are queued and rate-limited, and retries reuse the same Idempotency-Key, so a retry never duplicates an invoice in Xero. Failed invoices show Xero's message and can be retried.
+- **Corrections and payments:** void & rebuild unlocks the timesheets (drafts are deleted in Xero, approved invoices voided; paid ones need a credit note). Payment status updates through the webhook, with an hourly sync as backup.
+
 The next phases are listed in [docs/06-IMPLEMENTATION-BLUEPRINT.md §9](docs/06-IMPLEMENTATION-BLUEPRINT.md).
 
 ## Local setup

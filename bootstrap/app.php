@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         // The language cookie is read before login, so it is stored unencrypted (value is only "en"/"es").
         $middleware->encryptCookies(except: ['locale']);
+        $middleware->validateCsrfTokens(except: ['webhooks/*']);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('home'));
         $middleware->trustProxies(at: '*');

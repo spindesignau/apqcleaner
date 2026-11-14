@@ -4,10 +4,12 @@ use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\ClientImportController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\RecurringScheduleController;
 use App\Http\Controllers\Admin\ScheduleBoardController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\TimesheetController;
+use App\Http\Controllers\Admin\XeroController;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
@@ -17,9 +19,13 @@ use App\Http\Controllers\Staff\JobController;
 use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Staff\TodayController;
 use App\Http\Controllers\Staff\WeekController;
+use App\Http\Controllers\Webhooks\XeroWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/locale/{locale}', LocaleController::class)->whereIn('locale', ['en', 'es'])->name('locale.switch');
+
+// ---- Webhooks (no session; CSRF-exempt in bootstrap/app.php) ----
+Route::post('/webhooks/xero', XeroWebhookController::class)->name('webhooks.xero');
 
 // ---- Guests ----
 Route::middleware('guest')->group(function () {
@@ -83,6 +89,22 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::put('/timesheets/{entry}', [TimesheetController::class, 'update'])->name('timesheets.update');
             Route::post('/timesheets/{entry}/reject', [TimesheetController::class, 'reject'])->name('timesheets.reject');
             Route::post('/timesheets/{entry}/stop', [TimesheetController::class, 'stop'])->name('timesheets.stop');
+
+            Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+            Route::get('/invoices/run', [InvoiceController::class, 'create'])->name('invoices.run');
+            Route::post('/invoices/run', [InvoiceController::class, 'store'])->name('invoices.run.store');
+            Route::get('/invoices/runs/{run}', [InvoiceController::class, 'run'])->name('invoices.runs.show');
+            Route::post('/invoices/retry-failed', [InvoiceController::class, 'retryFailed'])->name('invoices.retry-failed');
+            Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+            Route::post('/invoices/{invoice}/retry', [InvoiceController::class, 'retry'])->name('invoices.retry');
+            Route::post('/invoices/{invoice}/void', [InvoiceController::class, 'void'])->name('invoices.void');
+
+            Route::get('/xero', [XeroController::class, 'show'])->name('xero.show');
+            Route::post('/xero/connect', [XeroController::class, 'connect'])->name('xero.connect');
+            Route::get('/xero/callback', [XeroController::class, 'callback'])->name('xero.callback');
+            Route::post('/xero/disconnect', [XeroController::class, 'disconnect'])->name('xero.disconnect');
+            Route::post('/xero/test', [XeroController::class, 'test'])->name('xero.test');
+            Route::put('/xero/settings', [XeroController::class, 'saveSettings'])->name('xero.settings');
         });
     });
 });
