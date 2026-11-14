@@ -21,13 +21,13 @@
         <p class="mt-3 text-center"><a href="{{ route('jobs.week') }}" class="badge-sage">{{ __('staff.this_week') }}</a></p>
     @endunless
 
-    <ol class="mt-5 space-y-3">
+    <ol class="mt-5 space-y-3" data-stagger>
         @foreach ($days as $day)
             @php
                 $isToday = $day->isSameDay($now);
                 $jobs = $jobsByDay->get($day->toDateString(), collect());
             @endphp
-            <li @class(['card !p-0 overflow-hidden', 'border-l-[6px] !border-l-sage' => $isToday, 'opacity-70' => $day->lt($now->copy()->startOfDay())])>
+            <li style="--i: {{ $loop->index }}" @class(['card !p-0 overflow-hidden', 'border-l-[6px] !border-l-sage' => $isToday, 'opacity-70' => $day->lt($now->copy()->startOfDay())])>
                 <div class="flex items-center justify-between px-4 pt-3 pb-1">
                     <h2 class="text-[17px]">{{ ucfirst($day->translatedFormat(__('dates.day_short'))) }}</h2>
                     @if ($isToday)<span class="badge-sage">{{ __('staff.today') }}</span>@endif

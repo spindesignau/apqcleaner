@@ -39,7 +39,7 @@
             @forelse ($backups as $b)
                 <li class="flex items-center justify-between gap-2 py-2">
                     <span>{{ $b['at']->tz($tz)->translatedFormat(__('dates.datetime')) }} <span class="text-navy-500">· {{ number_format($b['bytes'] / 1024, 1) }} KB</span></span>
-                    <a href="{{ route('admin.settings.backup.download', $b['name']) }}" class="font-semibold underline">⇩ {{ __('system.download') }}</a>
+                    <a href="{{ route('admin.settings.backup.download', $b['name']) }}" data-no-progress class="font-semibold underline">⇩ {{ __('system.download') }}</a>
                 </li>
             @empty
                 <li class="py-3 text-navy-500">{{ __('system.no_backup') }}</li>

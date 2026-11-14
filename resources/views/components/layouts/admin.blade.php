@@ -21,8 +21,8 @@
 <body class="min-h-dvh bg-canvas" x-data="{ menu: false }" @keydown.escape="menu = false">
     {{-- Sidebar (desktop) / slide-over (mobile) --}}
     <div x-show="menu" x-cloak x-transition.opacity class="fixed inset-0 z-40 bg-navy/50 lg:hidden" @click="menu = false"></div>
-    <aside :class="menu ? 'translate-x-0' : '-translate-x-full'" data-print-hide
-           class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-navy pt-[env(safe-area-inset-top)] text-offwhite transition-transform lg:translate-x-0">
+    <aside data-vt="sidebar" :class="menu ? 'translate-x-0' : '-translate-x-full'" data-print-hide
+           class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-navy pt-[env(safe-area-inset-top)] text-offwhite transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:translate-x-0">
         <div class="flex h-24 items-center px-6">
             <a href="{{ route('admin.dashboard') }}"><x-logo variant="dark" class="h-16 w-auto" /></a>
         </div>
@@ -74,7 +74,7 @@
     </aside>
 
     <div class="lg:pl-72">
-        <header class="sticky top-0 z-30 border-b border-sand bg-canvas/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <header data-vt="header" class="sticky top-0 z-30 border-b border-sand bg-canvas/90 pt-[env(safe-area-inset-top)] backdrop-blur">
             <div class="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
                 <button type="button" class="-ml-2 rounded-lg p-2 lg:hidden" @click="menu = true" aria-label="{{ __('common.menu') }}">
                     <svg class="size-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -84,10 +84,12 @@
                 <x-lang-pill tone="light" />
             </div>
         </header>
-        <main class="px-4 py-6 sm:px-6 lg:px-8">
+        <x-offline-banner />
+        <main data-page class="px-4 py-6 sm:px-6 lg:px-8">
             <x-flash class="mb-5 max-w-3xl" />
             {{ $slot }}
         </main>
     </div>
+    <x-confirm-dialog />
 </body>
 </html>

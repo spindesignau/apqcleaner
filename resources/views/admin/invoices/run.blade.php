@@ -27,7 +27,7 @@
             </div>
             <button class="btn-secondary btn-sm !w-full">{{ __('invoices.refresh') }}</button>
         </div>
-        <label class="mt-3 flex items-center gap-3 text-[15px]" x-show="mode === 'authorised'" x-cloak>
+        <label class="mt-3 flex items-center gap-3 text-[15px]" x-show="mode === 'authorised'" x-cloak x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end">
             <input type="checkbox" name="email" value="1" @checked($email) class="size-5 rounded border-sand-600 text-navy focus:ring-sage">
             {{ __('invoices.email') }} <span class="text-sm text-navy-500">— {{ __('invoices.email_help') }}</span>
         </label>

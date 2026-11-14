@@ -33,7 +33,7 @@
 
     <div class="border-t border-sand p-3">
         @if ($canStart)
-            <form method="POST" action="{{ route('jobs.start', $job) }}" data-gps>
+            <form method="POST" action="{{ route('jobs.start', $job) }}" data-gps data-haptic>
                 @csrf
                 <x-gps-fields />
                 <button type="submit" class="btn-primary">▶ {{ __('timer.start_job') }}</button>

@@ -53,7 +53,7 @@
                 @endif
             </section>
             @if ($invoice->sync_status !== \App\Models\Invoice::SYNC_VOIDED && $invoice->xero_status !== 'PAID')
-                <form method="POST" action="{{ route('admin.invoices.void', $invoice) }}" class="card space-y-3" x-data @submit="if (! confirm(@js(__('invoices.void_confirm')))) $event.preventDefault()">
+                <form method="POST" action="{{ route('admin.invoices.void', $invoice) }}" class="card space-y-3" data-confirm="{{ __('invoices.void_confirm') }}" data-confirm-danger>
                     @csrf
                     <p class="text-sm text-navy-500">{{ __('invoices.void_help') }}</p>
                     <button class="btn-secondary btn-sm !w-full !border-alert !text-alert">{{ __('invoices.void') }}</button>

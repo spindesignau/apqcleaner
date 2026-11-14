@@ -2,9 +2,9 @@
     <h1 class="text-[26px] leading-tight">{{ ucfirst($today->translatedFormat(__('dates.long_day'))) }}</h1>
     <p class="mt-0.5 text-navy-500">{{ trans_choice('staff.jobs_count', $jobs->count(), ['count' => $jobs->count()]) }}</p>
 
-    <div class="mt-5 space-y-4">
+    <div class="mt-5 space-y-4" data-stagger>
         @forelse ($jobs as $job)
-            <x-job-card :job="$job" />
+            <x-job-card :job="$job" style="--i: {{ $loop->index }}" />
         @empty
             <div class="card flex flex-col items-center px-6 py-10 text-center">
                 <svg class="size-14 text-sage" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">

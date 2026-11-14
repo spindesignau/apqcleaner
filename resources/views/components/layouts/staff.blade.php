@@ -5,7 +5,7 @@
     @include('partials.head', ['title' => $title])
 </head>
 <body class="min-h-dvh bg-canvas">
-    <header class="sticky top-0 z-30 bg-navy pt-[env(safe-area-inset-top)]">
+    <header data-vt="header" class="sticky top-0 z-30 bg-navy pt-[env(safe-area-inset-top)]">
         <div class="mx-auto flex h-16 max-w-md items-center justify-between gap-3 px-4">
             <a href="{{ route('home') }}" aria-label="{{ __('common.app_name') }}">
                 <x-logo variant="dark" class="h-10 w-auto shrink-0" />
@@ -15,8 +15,7 @@
                     <a href="{{ route('admin.dashboard') }}" class="rounded-full border border-offwhite/30 px-2.5 py-1.5 text-sm font-bold text-offwhite hover:bg-white/10">{{ __('common.admin_view') }}</a>
                 @endif
                 <x-lang-pill tone="dark" />
-                <form method="POST" action="{{ route('logout') }}" x-data
-                      @submit="if (! confirm(@js(__('common.sign_out_confirm')))) $event.preventDefault()">
+                <form method="POST" action="{{ route('logout') }}" data-confirm="{{ __('common.sign_out_confirm') }}" data-confirm-ok="{{ __('common.sign_out') }}">
                     @csrf
                     <button type="submit" class="flex size-11 items-center justify-center rounded-full border border-offwhite/30 text-offwhite hover:bg-white/10"
                             aria-label="{{ __('common.sign_out') }}" title="{{ __('common.sign_out') }}">
@@ -38,7 +37,9 @@
         @endif
     </header>
 
-    <main class="mx-auto max-w-md px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
+    <x-offline-banner />
+
+    <main data-page class="mx-auto max-w-md px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
         <x-flash class="mb-4" />
         {{ $slot }}
     </main>
@@ -53,7 +54,7 @@
              'icon' => 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7Z'],
         ];
     @endphp
-    <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-sand bg-surface pb-[env(safe-area-inset-bottom)]" aria-label="{{ __('common.menu') }}">
+    <nav data-vt="tabs" class="fixed inset-x-0 bottom-0 z-30 border-t border-sand bg-surface pb-[env(safe-area-inset-bottom)]" aria-label="{{ __('common.menu') }}">
         <ul class="mx-auto grid h-[4.5rem] max-w-md grid-cols-3">
             @foreach ($tabs as $tab)
                 @php $active = request()->routeIs($tab['match']); @endphp
@@ -61,7 +62,7 @@
                     <a href="{{ route($tab['route']) }}" @if ($active) aria-current="page" @endif
                        @class(['flex h-full flex-col items-center justify-center gap-1 text-[13px] font-semibold',
                                'text-navy' => $active, 'text-navy-500' => ! $active])>
-                        <span @class(['h-1 w-7 rounded-full', 'bg-sage' => $active, 'bg-transparent' => ! $active])></span>
+                        <span @class(['h-1 rounded-full transition-all duration-300', 'w-7 bg-sage' => $active, 'w-0 bg-transparent' => ! $active])></span>
                         <svg class="size-6" fill="none" stroke="currentColor" stroke-width="{{ $active ? 2.2 : 1.7 }}" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ $tab['icon'] }}"/></svg>
                         {{ $tab['label'] }}
                     </a>
@@ -69,5 +70,6 @@
             @endforeach
         </ul>
     </nav>
+    <x-confirm-dialog />
 </body>
 </html>

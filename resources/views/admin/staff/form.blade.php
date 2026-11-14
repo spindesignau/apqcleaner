@@ -120,7 +120,7 @@
                     @if ($staff->is_active)
                         @unless ($staff->is(auth()->user()))
                             <form method="POST" action="{{ route('admin.staff.lock', $staff) }}" class="mt-4 space-y-3"
-                                  x-data @submit="if (! confirm(@js(__('admin.staff.lock_confirm', ['name' => $staff->name])))) $event.preventDefault()">
+                                  data-confirm="{{ __('admin.staff.lock_confirm', ['name' => $staff->name]) }}" data-confirm-danger>
                                 @csrf
                                 <p class="text-sm text-navy-500">{{ __('admin.staff.lock_help') }}</p>
                                 <div>

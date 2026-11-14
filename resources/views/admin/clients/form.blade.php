@@ -137,13 +137,13 @@
                         @endforeach
                     </div>
                 </fieldset>
-                <div x-show="pricing === 'fixed'">
+                <div x-show="pricing === 'fixed'" x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end">
                     <label for="fixed_price" class="label">{{ __('clients.fields.fixed_price') }}</label>
                     <div class="relative"><span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-navy-500">$</span>
                         <input id="fixed_price" name="fixed_price" type="number" step="0.01" min="0" inputmode="decimal" value="{{ old('fixed_price', $client->fixed_price) }}" class="input pl-8"></div>
                     <x-field-error name="fixed_price" />
                 </div>
-                <div x-show="pricing === 'hourly'" x-cloak>
+                <div x-show="pricing === 'hourly'" x-cloak x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end">
                     <label for="hourly_rate" class="label">{{ __('clients.fields.hourly_rate') }}</label>
                     <div class="relative"><span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-navy-500">$</span>
                         <input id="hourly_rate" name="hourly_rate" type="number" step="0.01" min="0" inputmode="decimal" value="{{ old('hourly_rate', $client->hourly_rate) }}" class="input pl-8"></div>
@@ -164,12 +164,12 @@
                         @foreach (['percent_of_visit', 'fixed', 'none'] as $t)<option value="{{ $t }}">{{ __('cancellations.fee_types.'.$t) }}</option>@endforeach
                     </select>
                 </div>
-                <div x-show="feeType !== 'none'">
+                <div x-show="feeType !== 'none'" x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end">
                     <label for="cancellation_fee_value" class="label">{{ __('cancellations.fee_value') }}</label>
                     <input id="cancellation_fee_value" name="cancellation_fee_value" type="number" step="0.01" min="0" value="{{ old('cancellation_fee_value', $client->cancellation_fee_value ?? 50) }}" class="input">
                     <x-field-error name="cancellation_fee_value" />
                 </div>
-                <div x-show="feeType !== 'none'">
+                <div x-show="feeType !== 'none'" x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end">
                     <label for="cancellation_window_hours" class="label">{{ __('cancellations.window_hours') }}</label>
                     <input id="cancellation_window_hours" name="cancellation_window_hours" type="number" min="1" max="168" value="{{ old('cancellation_window_hours', $client->cancellation_window_hours ?? 24) }}" class="input">
                 </div>

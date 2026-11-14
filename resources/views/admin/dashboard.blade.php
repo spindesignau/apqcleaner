@@ -18,26 +18,26 @@
         <p class="mt-4 max-w-4xl rounded-xl bg-alert-50 px-4 py-3 font-medium text-alert">{{ trans_choice('xero.failed_banner', $failedInvoices, ['count' => $failedInvoices]) }} <a class="underline" href="{{ route('admin.invoices.index', ['state' => 'failed']) }}">{{ __('invoices.title') }} ›</a></p>
     @endif
 
-    <div class="mt-6 grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-5">
+    <div class="mt-6 grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-5" data-stagger>
         <a href="{{ route('admin.schedule') }}" class="card block hover:border-sage">
             <p class="label !mb-0">{{ __('admin.dashboard.today_visits') }}</p>
-            <p class="mt-1 font-display text-4xl font-semibold">{{ $todayVisits }}</p>
+            <p class="mt-1 font-display text-4xl font-semibold" data-count-up>{{ $todayVisits }}</p>
         </a>
         <a href="{{ route('admin.timesheets.index', ['status' => 'submitted']) }}" class="card block hover:border-sage">
             <p class="label !mb-0">{{ __('admin.dashboard.awaiting_approval') }}</p>
-            <p @class(['mt-1 font-display text-4xl font-semibold', 'text-amber' => $awaitingApproval > 0])>{{ $awaitingApproval }}</p>
+            <p @class(['mt-1 font-display text-4xl font-semibold', 'text-amber' => $awaitingApproval > 0]) data-count-up>{{ $awaitingApproval }}</p>
         </a>
         <a href="{{ route('admin.invoices.run') }}" class="card block hover:border-sage">
             <p class="label !mb-0">{{ __('admin.dashboard.uninvoiced') }}</p>
-            <p class="mt-1 font-display text-4xl font-semibold">{{ $uninvoiced }}</p>
+            <p class="mt-1 font-display text-4xl font-semibold" data-count-up>{{ $uninvoiced }}</p>
         </a>
         <a href="{{ route('admin.staff.index', ['status' => 'active']) }}" class="card block hover:border-sage">
             <p class="label !mb-0">{{ __('admin.dashboard.active_staff') }}</p>
-            <p class="mt-1 font-display text-4xl font-semibold">{{ $activeStaff }}</p>
+            <p class="mt-1 font-display text-4xl font-semibold" data-count-up>{{ $activeStaff }}</p>
         </a>
         <a href="{{ route('admin.staff.index', ['status' => 'locked']) }}" class="card block hover:border-sage">
             <p class="label !mb-0">{{ __('admin.dashboard.locked_staff') }}</p>
-            <p @class(['mt-1 font-display text-4xl font-semibold', 'text-alert' => $lockedStaff > 0])>{{ $lockedStaff }}</p>
+            <p @class(['mt-1 font-display text-4xl font-semibold', 'text-alert' => $lockedStaff > 0]) data-count-up>{{ $lockedStaff }}</p>
         </a>
     </div>
 

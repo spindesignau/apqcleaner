@@ -54,7 +54,7 @@
                     <button type="button" @click="decision = 'charged'" :class="decision === 'charged' ? 'bg-navy text-offwhite border-navy' : 'border-sand-600'" class="min-h-11 rounded-xl border-2 font-semibold">{{ __('cancellations.charge') }}</button>
                     <button type="button" @click="decision = 'waived'" :class="decision === 'waived' ? 'bg-navy text-offwhite border-navy' : 'border-sand-600'" class="min-h-11 rounded-xl border-2 font-semibold">{{ __('cancellations.waive') }}</button>
                 </div>
-                <div x-show="decision === 'charged'" class="space-y-3">
+                <div x-show="decision === 'charged'" x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end" class="space-y-3">
                     <div>
                         <label for="amount" class="label">{{ __('cancellations.fields.amount') }}</label>
                         <div class="relative"><span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-navy-500">$</span>
@@ -67,11 +67,11 @@
                             @foreach (['draft', 'authorised'] as $m)<option value="{{ $m }}">{{ __('xero.modes.'.$m) }}</option>@endforeach
                         </select>
                     </div>
-                    <label class="flex items-center gap-3 text-[15px]" x-show="mode === 'authorised'" x-cloak>
+                    <label class="flex items-center gap-3 text-[15px]" x-show="mode === 'authorised'" x-cloak x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end">
                         <input type="checkbox" name="email" value="1" class="size-5 rounded border-sand-600 text-navy focus:ring-sage"> {{ __('cancellations.fields.email') }}
                     </label>
                 </div>
-                <div x-show="decision === 'waived'" x-cloak>
+                <div x-show="decision === 'waived'" x-cloak x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end">
                     <label for="waive_reason" class="label">{{ __('cancellations.fields.waive_reason') }}</label>
                     <input id="waive_reason" name="waive_reason" maxlength="255" value="{{ old('waive_reason') }}" class="input">
                     <x-field-error name="waive_reason" />

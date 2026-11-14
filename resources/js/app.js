@@ -1,5 +1,9 @@
 import Alpine from 'alpinejs';
 import jobTimer from './job-timer';
+import { confirmDialog, confirmForms, connection, countUp, haptics, progressBar } from './motion';
+
+// Confirm dialogs must run first so a cancelled form never shows a spinner or loading bar.
+confirmForms();
 
 // Disable submit buttons once a form is sent, so double taps never post twice.
 document.addEventListener('submit', (event) => {
@@ -34,6 +38,13 @@ document.addEventListener('submit', (event) => {
     );
 }, true);
 
+haptics();
+
 Alpine.data('jobTimer', jobTimer);
+Alpine.data('confirmDialog', confirmDialog);
+Alpine.data('connection', connection);
 window.Alpine = Alpine;
 Alpine.start();
+
+const ready = () => { progressBar(); countUp(); };
+document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', ready, { once: true }) : ready();

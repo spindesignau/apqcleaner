@@ -28,7 +28,7 @@
                     @endforeach
                 </select>
             </div>
-            <div x-show="frequency === 'monthly_nth_weekday'" x-cloak>
+            <div x-show="frequency === 'monthly_nth_weekday'" x-cloak x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end">
                 <label for="nth_week" class="label">{{ __('schedule.fields.nth_week') }}</label>
                 <select id="nth_week" name="nth_week" class="input" :disabled="frequency !== 'monthly_nth_weekday'">
                     @foreach (__('schedule.nth_options') as $value => $label)
@@ -86,7 +86,7 @@
 
     @if ($editing)
         <form method="POST" action="{{ route('admin.schedules.destroy', $schedule) }}" class="mt-4 max-w-3xl"
-              x-data @submit="if (! confirm(@js(__('schedule.end_confirm')))) $event.preventDefault()">
+              data-confirm="{{ __('schedule.end_confirm') }}" data-confirm-danger data-confirm-ok="{{ __('schedule.end_regular') }}">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn-secondary btn-sm !border-alert !text-alert">{{ __('schedule.end_regular') }}</button>

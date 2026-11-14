@@ -85,7 +85,7 @@
             <form method="POST" action="{{ route('admin.appointments.remind', $appointment) }}">@csrf<button class="btn-secondary btn-sm">📱 {{ __('cancellations.remind') }}</button></form>
         </div>
         <form method="POST" action="{{ route('admin.appointments.destroy', $appointment) }}" class="mt-4 max-w-3xl"
-              x-data @submit="if (! confirm(@js(__('schedule.delete_confirm')))) $event.preventDefault()">
+              data-confirm="{{ __('schedule.delete_confirm') }}" data-confirm-danger data-confirm-ok="{{ __('schedule.delete_visit') }}">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn-secondary btn-sm !border-alert !text-alert">{{ __('schedule.delete_visit') }}</button>

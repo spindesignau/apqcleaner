@@ -72,7 +72,7 @@
         <div class="mb-3 flex flex-wrap items-center gap-3">
             <p class="text-[15px] font-semibold">{{ trans_choice('timesheets.awaiting', $totals['awaiting'], ['count' => $totals['awaiting']]) }}</p>
             <button type="submit" class="btn-primary btn-sm ml-auto" :disabled="selected.length === 0">
-                ✓ {{ __('timesheets.approve_selected') }} <span x-show="selected.length" x-text="'(' + selected.length + ')'"></span>
+                ✓ {{ __('timesheets.approve_selected') }} <span x-show="selected.length" x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end" x-text="'(' + selected.length + ')'"></span>
             </button>
         </div>
 

@@ -35,6 +35,12 @@
     --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-display: "Montserrat", "Inter Variable", ui-sans-serif, sans-serif;
 
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);      /* quick start, gentle settle */
+    --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+    --duration-fast: 150ms;
+    --duration-base: 220ms;
+    --duration-slow: 320ms;
+
     --radius-card: 1rem;
     --radius-btn: 0.875rem;
     --shadow-card: 0 1px 2px rgb(22 29 46 / 0.04), 0 4px 16px rgb(22 29 46 / 0.06);
@@ -63,9 +69,14 @@
 
 @utility card {
     @apply rounded-[var(--radius-card)] border border-sand bg-surface p-5 shadow-[var(--shadow-card)];
+    transition: border-color var(--duration-base) ease, box-shadow var(--duration-base) ease, transform var(--duration-base) var(--ease-out-soft);
 }
 @utility btn {
-    @apply inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[var(--radius-btn)] px-6 font-display text-[17px] font-bold tracking-wider uppercase transition-colors select-none disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[var(--radius-btn)] px-6 font-display text-[17px] font-bold tracking-wider uppercase select-none disabled:cursor-not-allowed disabled:opacity-50;
+    transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease,
+                box-shadow var(--duration-base) ease, transform var(--duration-fast) var(--ease-out-soft), opacity var(--duration-fast) ease;
+    &:hover:not(:disabled) { box-shadow: 0 4px 14px rgb(22 29 46 / 0.12); }
+    &:active:not(:disabled) { transform: scale(0.97); box-shadow: none; }
 }
 @utility btn-primary {
     @apply btn bg-navy text-offwhite hover:bg-navy-700 active:bg-navy-700;
@@ -84,12 +95,16 @@
 }
 @utility input {
     @apply block min-h-14 w-full rounded-xl border-sand-600 bg-canvas-50 px-4 text-[17px] text-navy placeholder:text-navy-500/60 focus:border-sage focus:ring-sage;
+    transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease, background-color var(--duration-fast) ease;
+    &:focus { background-color: var(--color-surface); }
+    &[aria-invalid="true"] { border-color: var(--color-alert); animation: apq-shake 360ms var(--ease-in-out-soft); }
 }
 @utility label {
     @apply mb-1.5 block text-xs font-bold tracking-wider text-navy-500 uppercase;
 }
 @utility badge {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold;
+    transition: background-color var(--duration-base) ease, color var(--duration-base) ease;
 }
 @utility badge-sage {
     @apply badge bg-sage-50 text-sage-700;
@@ -107,8 +122,86 @@
     @apply badge bg-alert-50 text-alert;
 }
 
+
+/* ============================================================================
+   Motion — every page, button, window and text change. Subtle, fast, and fully
+   switched off for people who ask their device to reduce motion.
+   ============================================================================ */
+
+/* Pages: cross-document View Transitions (Chrome, Edge, Safari 18+). The header, menu and tab bar stay put;
+   only the content fades and slides. Browsers without support get a simple fade-in instead. */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: apq-fade-out var(--duration-fast) ease both; }
+::view-transition-new(root) { animation: apq-page-in var(--duration-slow) var(--ease-out-soft) both; }
+[data-vt="header"] { view-transition-name: apq-header; }
+[data-vt="sidebar"] { view-transition-name: apq-sidebar; }
+[data-vt="tabs"] { view-transition-name: apq-tabs; }
+::view-transition-group(apq-header), ::view-transition-group(apq-sidebar), ::view-transition-group(apq-tabs) { animation: none; }
+@supports not (view-transition-name: none) {
+    [data-page] { animation: apq-page-in var(--duration-slow) var(--ease-out-soft) both; }
+}
+
+/* Links, chips and everything clickable change colour smoothly. */
+a, button, summary, label, select, [role="button"] {
+    transition: color var(--duration-fast) ease, background-color var(--duration-fast) ease, border-color var(--duration-fast) ease,
+                opacity var(--duration-fast) ease, text-decoration-color var(--duration-fast) ease;
+}
+a.card:hover { border-color: var(--color-sage); transform: translateY(-2px); box-shadow: 0 8px 24px rgb(22 29 46 / 0.08); }
+:focus-visible { transition: outline-offset var(--duration-fast) ease; }
+
+/* Lists and cards arrive with a short stagger (set --i on each item). */
+[data-stagger] > * { animation: apq-fade-up var(--duration-slow) var(--ease-out-soft) both; animation-delay: calc(var(--i, 0) * 45ms); }
+
+/* Show/hide sections (Alpine x-transition uses these classes). */
+.apq-enter { transition: opacity var(--duration-base) ease, transform var(--duration-base) var(--ease-out-soft); }
+.apq-enter-start { opacity: 0; transform: translateY(-4px); }
+.apq-enter-end { opacity: 1; transform: none; }
+.apq-leave { transition: opacity var(--duration-fast) ease, transform var(--duration-fast) ease; }
+.apq-leave-start { opacity: 1; transform: none; }
+.apq-leave-end { opacity: 0; transform: translateY(-4px); }
+
+/* Validation messages and inline notices fade in. */
+[id$="-error"], [role="alert"], [role="status"] { animation: apq-fade-up var(--duration-base) var(--ease-out-soft) both; }
+
+/* Expanding <details> (e.g. invoice lines) open smoothly where supported. */
+:root { interpolate-size: allow-keywords; }
+details::details-content { block-size: 0; overflow: clip; transition: block-size var(--duration-base) var(--ease-out-soft), content-visibility var(--duration-base) allow-discrete; }
+details[open]::details-content { block-size: auto; }
+
+/* Busy buttons (form sent, waiting for the server) show a spinner. */
+button[aria-busy="true"] { position: relative; color: transparent !important; pointer-events: none; }
+button[aria-busy="true"]::after {
+    content: ""; position: absolute; inset: 0; margin: auto; width: 1.25rem; height: 1.25rem; border-radius: 9999px;
+    border: 2.5px solid currentColor; border-color: rgb(245 243 238 / 0.9) rgb(245 243 238 / 0.9) rgb(245 243 238 / 0.9) transparent;
+    animation: apq-spin 700ms linear infinite;
+}
+.btn-secondary[aria-busy="true"]::after, button:not([class*="btn"])[aria-busy="true"]::after { border-color: var(--color-navy) var(--color-navy) var(--color-navy) transparent; }
+
+/* Top-of-page loading bar while the next page is on its way (slow 4G). */
+#apq-progress { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 100; pointer-events: none; transform-origin: left; transform: scaleX(0); opacity: 0;
+    background: linear-gradient(90deg, var(--color-sage), var(--color-sage-700)); transition: transform 8s cubic-bezier(0.1, 0.6, 0.2, 1), opacity var(--duration-base) ease; }
+#apq-progress.is-active { opacity: 1; transform: scaleX(0.9); }
+#apq-progress.is-done { opacity: 0; transform: scaleX(1); transition: transform var(--duration-base) ease, opacity var(--duration-slow) ease 120ms; }
+
+/* Dialog (replaces the browser's plain confirm box). */
+.apq-dialog-backdrop { transition: opacity var(--duration-base) ease; }
+.apq-dialog-panel { transition: opacity var(--duration-base) ease, transform var(--duration-slow) var(--ease-out-soft); }
+
+/* Numbers that change (dashboard tiles) count up; timers never jump layout. */
+[data-count-up] { font-variant-numeric: tabular-nums; }
+
+@keyframes apq-page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes apq-fade-out { to { opacity: 0; } }
+@keyframes apq-fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes apq-spin { to { transform: rotate(360deg); } }
+@keyframes apq-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
+@keyframes apq-pop { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); } }
+
 @media (prefers-reduced-motion: reduce) {
-    .animate-pulse { animation: none; }
+    *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+    @view-transition { navigation: none; }
+    a.card:hover { transform: none; }
+    button[aria-busy="true"]::after { animation: none; border-color: currentColor; }
 }
 
 /* Reports print cleanly: no sidebar or controls, full width. */

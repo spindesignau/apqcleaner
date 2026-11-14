@@ -3,6 +3,8 @@
 return [
     'app_name' => 'APQ Cleaning Service',
     'language' => 'Idioma',
+    'confirm' => 'Confirmar',
+    'offline' => "Sin señal — estás sin conexión. El cronómetro sigue contando; los botones volverán a funcionar cuando recuperes la conexión.",
     'save' => 'Guardar',
     'edit' => 'Editar',
     'cancel' => 'Cancelar',

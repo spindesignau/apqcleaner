@@ -9,7 +9,7 @@
 
         <div class="flex items-center gap-4">
             <div class="relative">
-                <img x-show="preview" x-cloak :src="preview" alt="" class="size-24 rounded-full object-cover ring-2 ring-sand">
+                <img x-show="preview" x-cloak x-transition.opacity.duration.200ms :src="preview" alt="" class="size-24 rounded-full object-cover ring-2 ring-sand">
                 <div x-show="!preview"><x-avatar :user="$user" size="lg" /></div>
             </div>
             <div class="flex-1 space-y-2">

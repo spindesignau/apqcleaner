@@ -2,6 +2,20 @@
 
 Changes are listed newest first. This page is visible to administrators only.
 
+## [0.7.1] – 14 November 2026
+
+### Improved — smoother everywhere
+- **Pages** fade and slide in. The top bar, admin menu and cleaners' tab bar stay still, so it feels like one app rather than separate pages.
+- **A thin loading bar** runs across the top while the next page loads (handy on slow mobile data).
+- **Buttons** press in slightly when tapped, lift on hover, and show a spinner while saving, so nobody taps twice.
+- **Confirm windows** (stop job, sign out, lock account, void invoice, end schedule, delete visit, disconnect Xero) are now APQ-styled pop-ups that slide up on phones. They replace the browser's plain grey boxes.
+- **Show/hide sections** (adjust times, pricing fields, fee options, email options) open and close smoothly. Expanding invoice lines slide open.
+- **Messages:** confirmation toasts slide in, error messages fade in, and an invalid field gives a gentle shake.
+- **Lists and cards** (today's jobs, the week, the schedule board, reports) appear with a quick cascade. Dashboard numbers count up.
+- **On the cleaners' phones,** the running timer pops in when a job starts, the active tab's indicator grows in, and phones that support it give a short buzz on START, STOP and SUBMIT.
+- **An offline banner** tells cleaners when they've lost signal (the timer keeps counting).
+- **Reduce motion:** anyone who has asked their phone or computer to reduce motion gets everything instantly, with no animation.
+
 ## [0.7.0] – 14 November 2026
 
 ### New

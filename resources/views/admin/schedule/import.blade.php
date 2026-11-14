@@ -24,7 +24,7 @@
         </form>
 
         <aside class="card h-fit space-y-4">
-            <a href="{{ route('admin.schedule.template') }}" class="btn-secondary btn-sm !w-full">⇩ {{ __('schedule_import.download') }}</a>
+            <a href="{{ route('admin.schedule.template') }}" data-no-progress class="btn-secondary btn-sm !w-full">⇩ {{ __('schedule_import.download') }}</a>
             <p class="text-sm text-navy-500">{{ __('schedule_import.download_help') }}</p>
             <dl class="space-y-3 text-[14px]">
                 @foreach (__('schedule_import.columns') as $col => $help)

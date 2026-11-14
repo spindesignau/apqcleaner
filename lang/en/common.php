@@ -3,6 +3,8 @@
 return [
     'app_name' => 'APQ Cleaning Service',
     'language' => 'Language',
+    'confirm' => 'Confirm',
+    'offline' => "No signal — you're offline. A running timer keeps counting; buttons will work again once you're back online.",
     'save' => 'Save',
     'edit' => 'Edit',
     'cancel' => 'Cancel',

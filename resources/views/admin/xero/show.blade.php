@@ -13,7 +13,7 @@
                 <div class="flex flex-wrap gap-2">
                     <form method="POST" action="{{ route('admin.xero.test') }}">@csrf<button class="btn-primary btn-sm">{{ __('xero.test') }}</button></form>
                     <form method="POST" action="{{ route('admin.xero.connect') }}">@csrf<button class="btn-secondary btn-sm">{{ __('xero.reconnect') }}</button></form>
-                    <form method="POST" action="{{ route('admin.xero.disconnect') }}" x-data @submit="if (! confirm(@js(__('xero.disconnect_confirm')))) $event.preventDefault()">
+                    <form method="POST" action="{{ route('admin.xero.disconnect') }}" data-confirm="{{ __('xero.disconnect_confirm') }}" data-confirm-danger data-confirm-ok="{{ __('xero.disconnect') }}">
                         @csrf<button class="btn-secondary btn-sm !border-alert !text-alert">{{ __('xero.disconnect') }}</button>
                     </form>
                 </div>

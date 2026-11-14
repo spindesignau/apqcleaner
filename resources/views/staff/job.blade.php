@@ -11,7 +11,7 @@
     {{-- ===== Timer / timesheet panel ===== --}}
     @if (! $entry)
         @if ($canStart->allowed())
-            <form method="POST" action="{{ route('jobs.start', $job) }}" data-gps class="mb-4">
+            <form method="POST" action="{{ route('jobs.start', $job) }}" data-gps data-haptic class="mb-4">
                 @csrf
                 <x-gps-fields />
                 <button type="submit" class="btn-primary !min-h-16 text-xl">▶ {{ __('timer.start_job') }}</button>
@@ -20,12 +20,12 @@
             <p class="mb-4 rounded-xl border border-dashed border-sand-600 px-4 py-3 text-center text-[15px] text-navy-500">⏱ {{ $canStart->message() }}</p>
         @endif
     @elseif ($entry->status === TimeEntryStatus::Running)
-        <section class="card mb-4 border-l-[6px] !border-l-sage text-center">
+        <section class="card mb-4 border-l-[6px] !border-l-sage text-center animate-[apq-pop_420ms_cubic-bezier(0.22,1,0.36,1)]">
             <p class="badge-sage"><span class="size-2.5 animate-pulse rounded-full bg-sage"></span> {{ __('timer.in_progress') }}</p>
             <p class="mt-4"><x-job-timer :entry="$entry" /></p>
             <p class="mt-2 text-navy-500">{{ __('timer.started_at', ['time' => $entry->localStart()->format($fmt)]) }}</p>
-            <form method="POST" action="{{ route('jobs.stop', $job) }}" class="mt-5" x-data
-                  @submit="if (! confirm(@js(__('timer.confirm_stop', ['client' => $client->display_name])))) $event.preventDefault()">
+            <form method="POST" action="{{ route('jobs.stop', $job) }}" class="mt-5" data-haptic
+                  data-confirm="{{ __('timer.confirm_stop', ['client' => $client->display_name]) }}" data-confirm-ok="{{ __('timer.stop_job') }}">
                 @csrf
                 <button type="submit" class="btn-stop !min-h-16 text-xl">■ {{ __('timer.stop_job') }}</button>
             </form>
@@ -55,7 +55,7 @@
             <p class="mt-4 text-center">
                 <button type="button" class="font-semibold underline underline-offset-4" @click="adjusting = !adjusting" :aria-expanded="adjusting">{{ __('timer.adjust_times') }} ›</button>
             </p>
-            <form method="POST" action="{{ route('jobs.adjust', $job) }}" x-show="adjusting" x-cloak class="mt-4 space-y-3 rounded-xl bg-canvas-50 p-4">
+            <form method="POST" action="{{ route('jobs.adjust', $job) }}" x-show="adjusting" x-cloak x-transition:enter="apq-enter" x-transition:enter-start="apq-enter-start" x-transition:enter-end="apq-enter-end" x-transition:leave="apq-leave" x-transition:leave-start="apq-leave-start" x-transition:leave-end="apq-leave-end" class="mt-4 space-y-3 rounded-xl bg-canvas-50 p-4">
                 @csrf
                 @method('PATCH')
                 <p class="text-sm text-navy-500">{{ __('timer.adjust_help') }}</p>
@@ -74,7 +74,7 @@
                 <button type="submit" class="btn-secondary">{{ __('timer.save_times') }}</button>
             </form>
 
-            <form method="POST" action="{{ route('jobs.submit', $job) }}" class="mt-5 space-y-4">
+            <form method="POST" action="{{ route('jobs.submit', $job) }}" class="mt-5 space-y-4" data-haptic>
                 @csrf
                 <div>
                     <label for="staff_notes" class="label">{{ __('timer.notes') }}</label>

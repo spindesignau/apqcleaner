@@ -1,7 +1,7 @@
 @php $today = now(config('apq.display_timezone'))->toDateString(); @endphp
 <x-layouts.admin :title="__('schedule.board_title')">
     <x-slot:actions>
-        <a href="{{ route('admin.schedule.template') }}" class="hidden text-sm font-semibold underline md:inline">⇩ {{ __('schedule_import.download') }}</a>
+        <a href="{{ route('admin.schedule.template') }}" data-no-progress class="hidden text-sm font-semibold underline md:inline">⇩ {{ __('schedule_import.download') }}</a>
         <a href="{{ route('admin.schedule.import', array_filter(['cleaner' => $staffId])) }}" class="btn-secondary btn-sm hidden sm:inline-flex">⇪ {{ __('schedule_import.button') }}</a>
         <a href="{{ route('admin.appointments.create') }}" class="btn-primary btn-sm hidden sm:inline-flex">+ {{ __('schedule.add_visit') }}</a>
     </x-slot:actions>
@@ -32,14 +32,14 @@
         <p class="mt-4 rounded-xl bg-amber-50 px-4 py-2.5 text-[15px] font-medium text-amber">⚠ {{ trans_choice('schedule.unassigned_count', $unassigned, ['count' => $unassigned]) }}</p>
     @endif
 
-    <div class="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
+    <div class="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7" data-stagger>
         @foreach ($week->days() as $day)
             @php
                 $key = $day->toDateString();
                 $visits = $byDay->get($key, collect());
                 $isToday = $key === $today;
             @endphp
-            <section @class(['flex flex-col rounded-[var(--radius-card)] border bg-surface 2xl:min-h-72', 'border-sage ring-2 ring-sage/40' => $isToday, 'border-sand' => ! $isToday])>
+            <section style="--i: {{ $loop->index }}" @class(['flex flex-col rounded-[var(--radius-card)] border bg-surface 2xl:min-h-72', 'border-sage ring-2 ring-sage/40' => $isToday, 'border-sand' => ! $isToday])>
                 <header class="flex items-center justify-between border-b border-sand px-3 py-2">
                     <h3 class="text-[15px]">
                         {{ ucfirst($day->translatedFormat('D j')) }}
