@@ -25,6 +25,9 @@ class ClientRequest extends FormRequest
             'is_active' => $this->boolean('is_active'),
             'billing_name' => $this->input('billing_name') ?: $this->input('display_name'),
             'invoice_frequency' => $this->input('invoice_frequency') ?: 'monthly',
+            'cancellation_fee_type' => $this->input('cancellation_fee_type') ?: 'percent_of_visit',
+            'cancellation_fee_value' => $this->input('cancellation_fee_value') ?? 50,
+            'cancellation_window_hours' => $this->input('cancellation_window_hours') ?: 24,
         ]);
     }
 
@@ -51,6 +54,9 @@ class ClientRequest extends FormRequest
             'hourly_rate' => ['nullable', 'required_if:pricing_model,hourly', 'numeric', 'min:0', 'max:999'],
             'payment_method' => ['required', new Enum(PaymentMethod::class)],
             'invoice_frequency' => ['nullable', Rule::in(['per_visit', 'weekly', 'fortnightly', 'monthly'])],
+            'cancellation_fee_type' => ['nullable', Rule::in(['percent_of_visit', 'fixed', 'none'])],
+            'cancellation_fee_value' => ['nullable', 'numeric', 'min:0', 'max:99999', Rule::when($this->input('cancellation_fee_type') === 'percent_of_visit', ['max:100'])],
+            'cancellation_window_hours' => ['nullable', 'integer', 'min:1', 'max:168'],
             'referral_source' => ['nullable', 'string', 'max:150'],
             'preferred_language' => ['required', Rule::in(array_keys(config('apq.locales')))],
             'sms_opt_in' => ['boolean'],

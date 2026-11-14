@@ -29,7 +29,7 @@ return [
         'xero_disconnected' => 'Xero no está conectado — no se pueden crear facturas.',
         'recent_activity' => 'Actividad reciente',
         'no_activity' => 'Todavía no hay actividad.',
-        'roadmap' => 'Las cancelaciones y los recordatorios por SMS llegan en la próxima fase.',
+        'roadmap' => 'Luego vienen los informes, las copias de seguridad y el paso al sitio definitivo.',
     ],
     'audit' => [
         'user.created' => ':actor creó la cuenta de :subject',
@@ -63,6 +63,12 @@ return [
         'xero.connected' => ':actor conectó Xero',
         'xero.disconnected' => ':actor desconectó Xero',
         'xero.settings_updated' => ':actor cambió la configuración de facturas',
+        'appointment.cancelled' => ':actor canceló una visita',
+        'sms.sent' => 'Se envió un SMS',
+        'sms.failed' => 'Falló un SMS',
+        'sms.settings_updated' => ':actor cambió la configuración de SMS',
+        'sms.template_updated' => ':actor editó una plantilla de SMS',
+        'client.sms_opted_out' => ':subject respondió STOP a los SMS',
         'system' => 'Sistema',
     ],
     'staff' => [

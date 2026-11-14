@@ -152,6 +152,30 @@
             </div>
         </section>
 
+        <section class="card space-y-5" x-data="{ feeType: @js(old('cancellation_fee_type', $client->cancellation_fee_type ?? 'percent_of_visit')) }">
+            <div>
+                <h2 class="text-lg">{{ __('cancellations.client_fee_settings') }}</h2>
+                <p class="text-sm text-navy-500">{{ __('cancellations.client_fee_help') }}</p>
+            </div>
+            <div class="grid gap-5 sm:grid-cols-3">
+                <div>
+                    <label for="cancellation_fee_type" class="label">{{ __('cancellations.client_fee_settings') }}</label>
+                    <select id="cancellation_fee_type" name="cancellation_fee_type" x-model="feeType" class="input">
+                        @foreach (['percent_of_visit', 'fixed', 'none'] as $t)<option value="{{ $t }}">{{ __('cancellations.fee_types.'.$t) }}</option>@endforeach
+                    </select>
+                </div>
+                <div x-show="feeType !== 'none'">
+                    <label for="cancellation_fee_value" class="label">{{ __('cancellations.fee_value') }}</label>
+                    <input id="cancellation_fee_value" name="cancellation_fee_value" type="number" step="0.01" min="0" value="{{ old('cancellation_fee_value', $client->cancellation_fee_value ?? 50) }}" class="input">
+                    <x-field-error name="cancellation_fee_value" />
+                </div>
+                <div x-show="feeType !== 'none'">
+                    <label for="cancellation_window_hours" class="label">{{ __('cancellations.window_hours') }}</label>
+                    <input id="cancellation_window_hours" name="cancellation_window_hours" type="number" min="1" max="168" value="{{ old('cancellation_window_hours', $client->cancellation_window_hours ?? 24) }}" class="input">
+                </div>
+            </div>
+        </section>
+
         <section class="card space-y-5">
             <h2 class="text-lg">{{ __('clients.sections.preferences') }}</h2>
             <div class="grid gap-5 sm:grid-cols-2">

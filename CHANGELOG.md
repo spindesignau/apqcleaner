@@ -2,11 +2,23 @@
 
 Changes are listed newest first. This page is visible to administrators only.
 
-## [0.6.0] – in progress
+## [0.6.0] – 14 November 2026
 
-### Coming in this update
-- Cancellations with a 24-hour countdown and one-click cancellation-fee invoices.
-- SMS reminders to clients through Mobile Message.
+### New
+- **Cancellations** (menu → Cancellations):
+  - Every visit in the next 48 hours shows a countdown. It turns amber with "fee applies" inside the client's cancellation window, usually 24 hours.
+  - **Cancel visit** records the reason and when the client told you, then suggests the fee. It can charge it as its own Xero invoice (Draft or Approved, optionally emailed) or waive it with a reason. Cleaner-caused and weather cancellations never carry a fee.
+  - The client and the assigned cleaners can be sent an SMS automatically.
+- **Cancellation fee rule per client:** a % of the visit price (default 50%), a fixed amount, or no fee, plus the notice window in hours.
+- **SMS reminders** (menu → SMS):
+  - Clients get a reminder the day before each visit, from 4pm by default, and only between 8am and 8pm.
+  - **Send reminder** sends one immediately, and you can send a free-text SMS from a client's page.
+  - Message templates can be edited in English and Spanish.
+  - Every message is listed with its delivery status. A client who replies STOP is opted out automatically.
+- **What's new** page (this page), linked at the bottom left of the admin menu. Administrators only.
+
+### Note
+- SMS stays in **test mode** until the Mobile Message account details are added to the server: messages are listed in the SMS log but not sent.
 
 ## [0.5.0] – 14 November 2026
 

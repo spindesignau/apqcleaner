@@ -16,6 +16,11 @@ return [
         'timer.start_early_minutes' => 60,
         'timer.overrun_alert_hours' => 3,
         'notify_staff_on_cancel' => true,
+        'sms.reminders_enabled' => true,
+        'sms.reminder_time' => '16:00',            // day-before reminders go out from this local time
+        'sms.quiet_start' => '20:00',              // no automatic SMS between quiet_start and quiet_end
+        'sms.quiet_end' => '08:00',
+        'sms.notify_client_on_cancel' => true,
         'xero.default_account_code' => '200',      // Sales
         'xero.cancellation_account_code' => '260', // Other Revenue
         'xero.payment_terms_days' => 7,

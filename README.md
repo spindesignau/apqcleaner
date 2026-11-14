@@ -38,6 +38,17 @@ A mobile-first app for APQ Cleaning Service (Northern Beaches, Sydney) covering 
 - **Locking and retries:** invoiced timesheets are locked. Pushes are queued and rate-limited, and retries reuse the same Idempotency-Key, so a retry never duplicates an invoice in Xero. Failed invoices show Xero's message and can be retried.
 - **Corrections and payments:** void & rebuild unlocks the timesheets (drafts are deleted in Xero, approved invoices voided; paid ones need a credit note). Payment status updates through the webhook, with an hourly sync as backup.
 
+**Phase 4 (cancellations and SMS) is done:**
+- **Cancellation monitor:** covers the next 48 hours, with countdown chips (amber "fee applies" inside the client's window).
+- **Cancel dialog:** records the reason and the notice time, which can be backdated. It suggests the fee from the client's rule (%, fixed or none), then charges it as its own Xero invoice (account 260) or waives it with a reason. It can also send the client and cleaners an SMS.
+- **SMS through Mobile Message:**
+  - Day-before reminders go out from 16:00, only between 08:00 and 20:00, never twice, and respect opt-outs.
+  - Manual reminders and free-text messages.
+  - Templates are editable in English and Spanish.
+  - A delivery log, with the delivery-receipt and inbound webhooks (a STOP reply opts the client out).
+- **Test mode:** with `SMS_ENABLED=false`, messages are logged only.
+- **What's new:** an admin-only changelog (`CHANGELOG.md`), linked at the bottom left of the admin menu.
+
 The next phases are listed in [docs/06-IMPLEMENTATION-BLUEPRINT.md §9](docs/06-IMPLEMENTATION-BLUEPRINT.md).
 
 ## Local setup

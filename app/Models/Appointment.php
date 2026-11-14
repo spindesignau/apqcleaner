@@ -62,6 +62,22 @@ class Appointment extends Model
         return $this->belongsToMany(User::class, 'appointment_staff')->withPivot('notified_at');
     }
 
+    public function cancellation()
+    {
+        return $this->hasOne(Cancellation::class);
+    }
+
+    public function smsMessages()
+    {
+        return $this->hasMany(SmsMessage::class);
+    }
+
+    /** Hours until the visit starts (negative once it has started). */
+    public function hoursUntilStart(): float
+    {
+        return round(now()->diffInSeconds($this->scheduled_start, false) / 3600, 2);
+    }
+
     public function timeEntries()
     {
         return $this->hasMany(TimeEntry::class);

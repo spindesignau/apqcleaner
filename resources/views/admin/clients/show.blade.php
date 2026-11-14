@@ -12,7 +12,10 @@
                         <h2 class="text-xl">{{ $client->display_name }}</h2>
                         @if ($client->billing_name !== $client->display_name)<p class="text-navy-500">{{ $client->billing_name }}</p>@endif
                     </div>
-                    @unless ($client->is_active)<span class="badge-sand">{{ __('clients.inactive') }}</span>@endunless
+                    <div class="flex gap-2">
+                        @unless ($client->is_active)<span class="badge-sand">{{ __('clients.inactive') }}</span>@endunless
+                        @unless ($client->sms_opt_in)<span class="badge-amber">{{ __('sms.opted_out_badge') }}</span>@endunless
+                    </div>
                 </div>
                 <dl class="mt-4 grid gap-4 text-[15px] sm:grid-cols-2">
                     <div>
@@ -79,6 +82,7 @@
             </section>
         </div>
 
+        <div class="space-y-6">
         <aside class="card h-fit">
             <div class="flex items-center justify-between gap-2">
                 <h2 class="text-lg">{{ __('clients.upcoming') }}</h2>
@@ -102,5 +106,16 @@
                 @endforelse
             </ul>
         </aside>
+        @if ($client->mobile && $client->sms_opt_in)
+            <form method="POST" action="{{ route('admin.clients.sms', $client) }}" class="card space-y-3" x-data="{ body: '' }">
+                @csrf
+                <h2 class="text-lg">{{ __('sms.send_title') }}</h2>
+                <textarea name="body" rows="3" maxlength="612" required x-model="body" class="input !min-h-20 py-2 text-[15px]" aria-label="{{ __('sms.message') }}"></textarea>
+                <p class="text-xs text-navy-500" x-text="@js(__('sms.chars', ['n' => '__N__', 's' => '__S__'])).replace('__N__', body.length).replace('__S__', body.length <= 160 ? 1 : Math.ceil(body.length / 153))"></p>
+                <x-field-error name="body" />
+                <button class="btn-secondary btn-sm">📱 {{ __('sms.send') }}</button>
+            </form>
+        @endif
+        </div>
     </div>
 </x-layouts.admin>

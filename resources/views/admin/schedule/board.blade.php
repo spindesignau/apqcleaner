@@ -63,6 +63,9 @@
                                 <p class="truncate font-semibold">{{ $visit->client->display_name }}</p>
                                 <p class="truncate text-navy-500">{{ $visit->client->suburb }}</p>
                                 <p class="mt-1 truncate text-[13px]"><x-staff-names :staff="$visit->staff" /></p>
+                                @if ($visit->status === \App\Enums\AppointmentStatus::Scheduled && $visit->scheduled_start->between(now(), now()->addHours(48)))
+                                    <x-countdown-chip :appointment="$visit" class="mt-1 !py-0 !text-[11px]" />
+                                @endif
                                 @if ($visit->status !== \App\Enums\AppointmentStatus::Scheduled)
                                     <span class="{{ $visit->status->badgeClass() }} mt-1 !py-0 !text-[11px]">{{ $visit->status->label() }}</span>
                                 @elseif (! $visit->recurring_schedule_id)

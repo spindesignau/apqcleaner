@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AppointmentController;
+use App\Http\Controllers\Admin\CancellationController;
 use App\Http\Controllers\Admin\ChangelogController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\ClientImportController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\RecurringScheduleController;
 use App\Http\Controllers\Admin\ScheduleBoardController;
 use App\Http\Controllers\Admin\ScheduleImportController;
+use App\Http\Controllers\Admin\SmsController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\TimesheetController;
 use App\Http\Controllers\Admin\XeroController;
@@ -21,6 +23,7 @@ use App\Http\Controllers\Staff\JobController;
 use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Staff\TodayController;
 use App\Http\Controllers\Staff\WeekController;
+use App\Http\Controllers\Webhooks\MobileMessageWebhookController;
 use App\Http\Controllers\Webhooks\XeroWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +31,8 @@ Route::get('/locale/{locale}', LocaleController::class)->whereIn('locale', ['en'
 
 // ---- Webhooks (no session; CSRF-exempt in bootstrap/app.php) ----
 Route::post('/webhooks/xero', XeroWebhookController::class)->name('webhooks.xero');
+Route::post('/webhooks/mobile-message/{token}/status', [MobileMessageWebhookController::class, 'status'])->name('webhooks.sms.status');
+Route::post('/webhooks/mobile-message/{token}/inbound', [MobileMessageWebhookController::class, 'inbound'])->name('webhooks.sms.inbound');
 
 // ---- Guests ----
 Route::middleware('guest')->group(function () {
@@ -107,6 +112,16 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
             Route::post('/invoices/{invoice}/retry', [InvoiceController::class, 'retry'])->name('invoices.retry');
             Route::post('/invoices/{invoice}/void', [InvoiceController::class, 'void'])->name('invoices.void');
+
+            Route::get('/cancellations', [CancellationController::class, 'index'])->name('cancellations.index');
+            Route::get('/appointments/{appointment}/cancel', [CancellationController::class, 'create'])->name('cancellations.create');
+            Route::post('/appointments/{appointment}/cancel', [CancellationController::class, 'store'])->name('cancellations.store');
+            Route::post('/appointments/{appointment}/remind', [CancellationController::class, 'remind'])->name('appointments.remind');
+
+            Route::get('/sms', [SmsController::class, 'index'])->name('sms.index');
+            Route::put('/sms/settings', [SmsController::class, 'updateSettings'])->name('sms.settings');
+            Route::put('/sms/templates/{template}', [SmsController::class, 'updateTemplate'])->name('sms.templates.update');
+            Route::post('/clients/{client}/sms', [SmsController::class, 'sendToClient'])->name('clients.sms');
 
             Route::get('/xero', [XeroController::class, 'show'])->name('xero.show');
             Route::post('/xero/connect', [XeroController::class, 'connect'])->name('xero.connect');

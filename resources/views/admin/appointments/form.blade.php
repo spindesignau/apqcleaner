@@ -12,7 +12,10 @@
                     <h2 class="text-xl"><a href="{{ route('admin.clients.show', $appointment->client) }}" class="hover:underline">{{ $appointment->client->display_name }}</a></h2>
                     <p class="text-navy-500">{{ $appointment->client->fullAddress() }}</p>
                 </div>
-                <span class="{{ $appointment->status->badgeClass() }}">{{ $appointment->status->label() }}</span>
+                <div class="flex flex-col items-end gap-1">
+                    <span class="{{ $appointment->status->badgeClass() }}">{{ $appointment->status->label() }}</span>
+                    @if ($appointment->status === \App\Enums\AppointmentStatus::Scheduled)<x-countdown-chip :appointment="$appointment" />@endif
+                </div>
             </div>
             @if ($appointment->recurring_schedule_id)
                 <p class="rounded-xl bg-sage-50 px-4 py-3 text-sm text-sage-700">{{ __('schedule.recurring_note') }}</p>
@@ -77,6 +80,10 @@
     </form>
 
     @if ($editing && $appointment->status === \App\Enums\AppointmentStatus::Scheduled)
+        <div class="mt-4 flex max-w-3xl flex-wrap gap-3">
+            <a href="{{ route('admin.cancellations.create', $appointment) }}" class="btn-secondary btn-sm !border-alert !text-alert">{{ __('cancellations.cancel') }}</a>
+            <form method="POST" action="{{ route('admin.appointments.remind', $appointment) }}">@csrf<button class="btn-secondary btn-sm">📱 {{ __('cancellations.remind') }}</button></form>
+        </div>
         <form method="POST" action="{{ route('admin.appointments.destroy', $appointment) }}" class="mt-4 max-w-3xl"
               x-data @submit="if (! confirm(@js(__('schedule.delete_confirm')))) $event.preventDefault()">
             @csrf

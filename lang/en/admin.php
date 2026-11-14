@@ -29,7 +29,7 @@ return [
         'xero_disconnected' => 'Xero is not connected — invoices can\'t be created.',
         'recent_activity' => 'Recent activity',
         'no_activity' => 'No activity yet.',
-        'roadmap' => 'Cancellations and SMS reminders arrive in the next phase.',
+        'roadmap' => 'Reports, backups and the move to the live site come next.',
     ],
     'audit' => [
         'user.created' => ':actor created the account for :subject',
@@ -63,6 +63,12 @@ return [
         'xero.connected' => ':actor connected Xero',
         'xero.disconnected' => ':actor disconnected Xero',
         'xero.settings_updated' => ':actor changed the invoice settings',
+        'appointment.cancelled' => ':actor cancelled a visit',
+        'sms.sent' => 'An SMS was sent',
+        'sms.failed' => 'An SMS failed',
+        'sms.settings_updated' => ':actor changed the SMS settings',
+        'sms.template_updated' => ':actor edited an SMS template',
+        'client.sms_opted_out' => ':subject replied STOP to SMS',
         'system' => 'System',
     ],
     'staff' => [
