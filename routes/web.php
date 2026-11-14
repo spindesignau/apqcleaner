@@ -120,6 +120,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::get('/sms', [SmsController::class, 'index'])->name('sms.index');
             Route::put('/sms/settings', [SmsController::class, 'updateSettings'])->name('sms.settings');
+            Route::post('/sms/check', [SmsController::class, 'checkAccount'])->name('sms.check');
             Route::put('/sms/templates/{template}', [SmsController::class, 'updateTemplate'])->name('sms.templates.update');
             Route::post('/clients/{client}/sms', [SmsController::class, 'sendToClient'])->name('clients.sms');
 

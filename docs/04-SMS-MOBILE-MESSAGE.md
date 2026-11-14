@@ -6,12 +6,22 @@
 | **Used for** | Client appointment reminders (automatic and manual), cancellation notices, free-text SMS to clients, and job-cancelled notices to staff |
 | **Transport** | REST/JSON over HTTPS via Laravel's `Http` client. No SDK needed. |
 
-> ### ⚠ Verify before build
-> The Mobile Message API documentation could not be fetched while this spec was written: the site is outside this environment's network allow-list.
+> ### ✅ Checked against the live API docs (14 Nov 2026)
+> The integration was checked against https://mobilemessage.com.au/api-documentation. Built in Phase 4: `app/Services/Sms/MobileMessageGateway.php`.
 >
-> The endpoint, field and webhook names below come from the provider's commonly documented v1 API, **but they have not been checked against the live docs**. Before coding, confirm them in the Mobile Message dashboard → *Settings → API* / API documentation.
+> - **Send:** `POST https://api.mobilemessage.com.au/v1/messages`, HTTP Basic auth, body `{"messages":[{"to","message","sender","custom_ref"}]}`, plus an `Idempotency-Key` header.
+>   - `to` is an **Australian mobile only**, written `0412…` or `61412…`. A `+` is rejected.
+>   - Per-message `status` is `success`, `error` or `blocked` (the recipient unsubscribed).
+>   - HTTP errors: 401 bad credentials, 400 malformed request, 403 out of credits, 429 more than 5 concurrent requests, 5xx retry with the same key.
+> - **`sender`** must be a sender ID approved on the account (`GET /v1/senders`). The SMS page's **Check account** button lists them and shows the balance (`GET /v1/account` → `credit_balance`).
+> - **`{optout}`** in a message is replaced by Mobile Message with the correct opt-out text (always 20 characters): "Opt out: Reply Stop" for number senders, or an `mb.st` link for business-name senders, which can't receive replies.
+> - **Webhooks:**
+>   - Status receipts: `status` (`delivered`/`failed`), `message_id`, `custom_ref`, `part_number`/`total_parts`. Long messages send one receipt per part.
+>   - Inbound: `type` (`inbound`/`unsubscribe`), `sender`, `to`, `message`, `received_at`.
+>   - Optional signing: `X-MM-Timestamp` + `X-MM-Signature`, a lowercase hex HMAC-SHA256 of `{timestamp}.{raw_body}`, with the timestamp within 5 minutes.
+> - **Sandbox:** create one under Settings > API in their web app. It has its own keys, sends from 61491570006, and numbers ending in `000` simulate a failed delivery.
 >
-> All provider-specific names are isolated in **one class** (`MobileMessageClient`) and `config/mobilemessage.php`, so any differences are a single-file change.
+> Sections 3 and 6 below were written before the docs were available. Where they differ, the code above is correct.
 
 ## 1. Account set-up checklist
 

@@ -15,6 +15,7 @@ use App\Models\SmsTemplate;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\Sms\MobileMessageGateway;
+use App\Services\Sms\SmsDispatcher;
 use App\Services\Sms\SmsGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -210,24 +211,108 @@ class CancellationsAndSmsTest extends TestCase
 
     // ---- Provider + webhooks ----
 
-    public function test_mobile_message_gateway_payload_and_responses(): void
+    public function test_mobile_message_gateway_matches_documented_api(): void
     {
         config(['mobilemessage.username' => 'u', 'mobilemessage.password' => 'p', 'mobilemessage.sender' => 'APQClean']);
         Http::fake(['api.mobilemessage.com.au/v1/messages' => Http::sequence()
-            ->push(['status' => 'complete', 'results' => [['custom_ref' => 'r1', 'status' => 'success', 'message_id' => 'mm-1', 'cost' => 1]]])
-            ->push(['status' => 'complete', 'results' => [['custom_ref' => 'r2', 'status' => 'error', 'error' => 'Invalid number']]]),
+            ->push(['status' => 'complete', 'total_cost' => 1, 'results' => [['to' => '61422222222', 'custom_ref' => 'r1', 'status' => 'success', 'message_id' => 'mm-1', 'cost' => 1]]])
+            ->push(['status' => 'complete', 'results' => [['custom_ref' => 'r2', 'status' => 'error', 'error' => 'Invalid number']]])
+            ->push(['status' => 'complete', 'results' => [['custom_ref' => 'r3', 'status' => 'blocked']]])
+            ->push(['error' => 'Insufficient credits'], 403)
+            ->push(['error' => 'Too many concurrent requests'], 429),
         ]);
         $gw = new MobileMessageGateway;
 
         $ok = $gw->send('+61422222222', 'Hello', 'r1');
         $this->assertTrue($ok['ok']);
         $this->assertSame('mm-1', $ok['provider_id']);
-        Http::assertSent(fn (Request $r) => $r->hasHeader('Authorization', 'Basic '.base64_encode('u:p'))
-            && $r['messages'][0] === ['to' => '+61422222222', 'message' => 'Hello', 'sender' => 'APQClean', 'custom_ref' => 'r1']);
+        Http::assertSent(fn (Request $r) => $r->url() === 'https://api.mobilemessage.com.au/v1/messages'
+            && $r->hasHeader('Authorization', 'Basic '.base64_encode('u:p'))
+            && $r->header('Idempotency-Key')[0] === MobileMessageGateway::idempotencyKey('r1')
+            && $r['messages'][0] === ['to' => '61422222222', 'message' => 'Hello', 'sender' => 'APQClean', 'custom_ref' => 'r1']);   // no "+"
 
-        $bad = $gw->send('+61400000000', 'Hello', 'r2');
-        $this->assertFalse($bad['ok']);
-        $this->assertSame('Invalid number', $bad['error']);
+        $this->assertSame('Invalid number', $gw->send('+61400000000', 'x', 'r2')['error']);
+        $blocked = $gw->send('+61400000001', 'x', 'r3');
+        $this->assertTrue($blocked['blocked']);
+        $this->assertSame(__('sms.err_credits'), $gw->send('+61400000002', 'x', 'r4')['error']);
+        $busy = $gw->send('+61400000003', 'x', 'r5');
+        $this->assertTrue($busy['retryable']);
+    }
+
+    public function test_blocked_number_opts_the_client_out(): void
+    {
+        config(['mobilemessage.enabled' => true, 'mobilemessage.username' => 'u', 'mobilemessage.password' => 'p']);
+        Http::fake(['api.mobilemessage.com.au/*' => Http::response(['status' => 'complete', 'results' => [['status' => 'blocked']]])]);
+        $visit = $this->visit('2026-11-17 09:00');
+
+        $this->actingAs($this->admin)->post(route('admin.appointments.remind', $visit));
+
+        $this->assertSame('skipped', SmsMessage::sole()->status);
+        $this->assertFalse($this->client->fresh()->sms_opt_in);
+    }
+
+    public function test_busy_provider_leaves_automatic_reminder_for_the_next_run(): void
+    {
+        config(['mobilemessage.enabled' => true, 'mobilemessage.username' => 'u', 'mobilemessage.password' => 'p']);
+        Http::fakeSequence('api.mobilemessage.com.au/*')
+            ->push(['error' => 'busy'], 429)
+            ->push(['status' => 'complete', 'results' => [['status' => 'success', 'message_id' => 'mm-7', 'custom_ref' => 'x']]]);
+        $this->visit('2026-11-17 09:00');
+        Carbon::setTestNow(Carbon::parse('2026-11-16 16:05', 'Australia/Sydney'));
+
+        $this->artisan('apq:sms:send-reminders')->expectsOutput('Sent 0 reminder(s).');
+        $this->assertSame(0, SmsMessage::count());   // attempt forgotten, so it can be retried
+        $this->artisan('apq:sms:send-reminders')->expectsOutput('Sent 1 reminder(s).');
+        $this->assertSame('sent', SmsMessage::sole()->status);
+    }
+
+    public function test_landlines_and_overseas_numbers_are_not_texted(): void
+    {
+        $this->assertFalse(SmsDispatcher::textable('+61299998888'));
+        $this->assertFalse(SmsDispatcher::textable('+447528389679'));
+        $this->assertTrue(SmsDispatcher::textable('+61412345678'));
+        $this->assertSame(1, SmsDispatcher::segments(str_repeat('a', 140).'{optout}'));   // {optout} counts as 20
+        $this->assertSame(2, SmsDispatcher::segments(str_repeat('a', 141).'{optout}'));
+    }
+
+    public function test_webhook_signature_uses_documented_scheme(): void
+    {
+        // Test vector from the Mobile Message docs.
+        $this->assertSame('52344b9592722e0241d82036e0920f4286bc0d47ba4624c5a1588193490a1efb', hash_hmac('sha256', '1754640000.{"test":1}', 'abc123'));
+
+        config(['mobilemessage.webhook_token' => 'tok', 'mobilemessage.webhook_secret' => 'abc123']);
+        $body = json_encode(['message_id' => 'mm-1', 'status' => 'delivered', 'part_number' => 1, 'total_parts' => 1]);
+        $ts = (string) time();
+
+        $this->call('POST', '/webhooks/mobile-message/tok/status', [], [], [], ['CONTENT_TYPE' => 'application/json'], $body)->assertStatus(400);
+        $this->call('POST', '/webhooks/mobile-message/tok/status', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_MM_TIMESTAMP' => $ts, 'HTTP_X_MM_SIGNATURE' => 'bad'], $body)->assertStatus(401);
+        $this->call('POST', '/webhooks/mobile-message/tok/status', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_MM_TIMESTAMP' => $ts, 'HTTP_X_MM_SIGNATURE' => hash_hmac('sha256', $ts.'.'.$body, 'abc123')], $body)->assertOk();
+    }
+
+    public function test_multipart_receipts_never_turn_a_failure_into_delivered_and_unsubscribe_type_opts_out(): void
+    {
+        config(['mobilemessage.webhook_token' => 'tok']);
+        $msg = SmsMessage::create(['client_id' => $this->client->id, 'to_number' => '+61422222222', 'body' => 'x', 'status' => 'sent', 'provider_message_id' => 'mm-2', 'custom_ref' => 'r2']);
+
+        $this->postJson('/webhooks/mobile-message/tok/status', ['message_id' => 'mm-2', 'status' => 'failed', 'part_number' => 2, 'total_parts' => 2])->assertOk();
+        $this->postJson('/webhooks/mobile-message/tok/status', ['message_id' => 'mm-2', 'status' => 'delivered', 'part_number' => 1, 'total_parts' => 2])->assertOk();
+        $this->assertSame('failed', $msg->fresh()->status);
+
+        $this->postJson('/webhooks/mobile-message/tok/inbound', ['type' => 'unsubscribe', 'sender' => '61422222222', 'to' => '61491570006', 'message' => 'opt out link', 'received_at' => '2026-11-16 00:00:00'])->assertOk();
+        $this->assertFalse($this->client->fresh()->sms_opt_in);
+    }
+
+    public function test_check_account_shows_balance_and_flags_unapproved_sender(): void
+    {
+        config(['mobilemessage.username' => 'u', 'mobilemessage.password' => 'p', 'mobilemessage.sender' => 'APQClean']);
+        Http::fake([
+            'api.mobilemessage.com.au/v1/account' => Http::response(['status' => 'complete', 'credit_balance' => 1000]),
+            'api.mobilemessage.com.au/v1/senders' => Http::response(['status' => 'complete', 'results' => [['sender' => 'CompanyABC', 'type' => 'alpha', 'label' => 'My Brand', 'is_default' => true]]]),
+        ]);
+
+        $this->actingAs($this->admin)->post(route('admin.sms.check'))
+            ->assertSessionHas('status', fn ($s) => str_contains($s, '1,000') && str_contains($s, 'CompanyABC'))
+            ->assertSessionHas('warning', fn ($w) => str_contains($w, 'APQClean'));
     }
 
     public function test_test_recipient_redirects_outside_production(): void
@@ -263,7 +348,7 @@ class CancellationsAndSmsTest extends TestCase
         $this->assertSame('delivered', $msg->fresh()->status);
         $this->assertNotNull($msg->fresh()->delivered_at);
 
-        $this->postJson('/webhooks/mobile-message/secret-token/inbound', ['from' => '0422 222 222', 'message' => 'Stop'])->assertOk();
+        $this->postJson('/webhooks/mobile-message/secret-token/inbound', ['type' => 'inbound', 'sender' => '61422222222', 'message' => 'Stop'])->assertOk();
         $this->assertFalse($this->client->fresh()->sms_opt_in);
         $this->assertSame('received', SmsMessage::where('direction', 'inbound')->sole()->status);
     }

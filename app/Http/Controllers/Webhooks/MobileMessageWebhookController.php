@@ -13,8 +13,12 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
 /**
- * Mobile Message delivery receipts and inbound replies. Authenticated by a secret token in the URL
- * (MOBILEMESSAGE_WEBHOOK_TOKEN). Field names are read flexibly — see config/mobilemessage.php.
+ * Mobile Message delivery receipts and inbound replies (https://mobilemessage.com.au/api-documentation → Webhooks).
+ *  - URL contains a secret token (MOBILEMESSAGE_WEBHOOK_TOKEN); optionally also signed with X-MM-Signature.
+ *  - Status payload: status (delivered|failed), message_id, custom_ref, part_number, total_parts.
+ *    Long messages send one receipt per part, retries can repeat, order isn't guaranteed — so handling is idempotent
+ *    and a "failed" part is never overwritten by a later "delivered" one.
+ *  - Inbound payload: type (inbound|unsubscribe), sender (their number), to, message, received_at.
  */
 class MobileMessageWebhookController extends Controller
 {
@@ -22,7 +26,7 @@ class MobileMessageWebhookController extends Controller
 
     public function status(Request $request, string $token): Response
     {
-        $this->authorizeToken($token);
+        $this->authorizeRequest($request, $token);
         $id = $request->input('message_id') ?? $request->input('id');
         $ref = $request->input('custom_ref') ?? $request->input('reference');
         $raw = Str::lower((string) ($request->input('status') ?? $request->input('delivery_status') ?? ''));
@@ -32,14 +36,14 @@ class MobileMessageWebhookController extends Controller
             ->first();
         if ($message) {
             $status = match (true) {
-                in_array($raw, ['delivered', 'delivrd', 'success'], true) => 'delivered',
-                in_array($raw, ['failed', 'undeliverable', 'undeliv', 'rejected', 'expired', 'error'], true) => 'failed',
+                $raw === 'failed' => 'failed',
+                $raw === 'delivered' && $message->status !== 'failed' => 'delivered',
                 default => $message->status,
             };
             $message->update([
                 'status' => $status,
                 'delivered_at' => $status === 'delivered' ? now() : $message->delivered_at,
-                'status_detail' => $status === 'failed' ? mb_substr((string) ($request->input('error') ?? $request->input('reason') ?? $raw), 0, 255) : $message->status_detail,
+                'status_detail' => $status === 'failed' ? __('sms.delivery_failed') : $message->status_detail,
             ]);
         }
         IntegrationLog::create(['service' => 'mobile_message', 'direction' => 'webhook', 'endpoint' => 'status', 'http_status' => 200, 'summary' => $raw ?: 'status']);
@@ -49,8 +53,9 @@ class MobileMessageWebhookController extends Controller
 
     public function inbound(Request $request, string $token): Response
     {
-        $this->authorizeToken($token);
-        $from = AuPhone::normalise((string) ($request->input('from') ?? $request->input('sender') ?? ''));
+        $this->authorizeRequest($request, $token);
+        $from = AuPhone::normalise((string) ($request->input('sender') ?? $request->input('from') ?? ''));
+        $isUnsubscribe = $request->input('type') === 'unsubscribe';
         $body = trim((string) ($request->input('message') ?? $request->input('body') ?? $request->input('text') ?? ''));
         $client = $from ? Client::where('mobile', $from)->first() : null;
 
@@ -60,7 +65,7 @@ class MobileMessageWebhookController extends Controller
             'status' => 'received', 'segments' => 1,
         ]);
 
-        if ($client && in_array(Str::upper(preg_replace('/[^\pL ]/u', '', $body)), self::OPT_OUT_WORDS, true)) {
+        if ($client && ($isUnsubscribe || in_array(Str::upper(preg_replace('/[^\pL ]/u', '', $body)), self::OPT_OUT_WORDS, true))) {
             $client->forceFill(['sms_opt_in' => false, 'sms_opted_out_at' => now()])->save();
             Audit::log('client.sms_opted_out', $client, reason: 'Replied '.$body);
         }
@@ -69,9 +74,18 @@ class MobileMessageWebhookController extends Controller
         return response('', 200);
     }
 
-    private function authorizeToken(string $token): void
+    private function authorizeRequest(Request $request, string $token): void
     {
         $expected = (string) config('mobilemessage.webhook_token');
         abort_if($expected === '' || ! hash_equals($expected, $token), 404);
+
+        // Optional signing: lowercase hex HMAC-SHA256 of "{timestamp}.{raw body}", timestamp within 5 minutes.
+        $secret = (string) config('mobilemessage.webhook_secret');
+        if ($secret !== '') {
+            $timestamp = (string) $request->header('X-MM-Timestamp', '');
+            $signature = (string) $request->header('X-MM-Signature', '');
+            abort_if($timestamp === '' || abs(time() - (int) $timestamp) > 300, 400);
+            abort_unless(hash_equals(hash_hmac('sha256', $timestamp.'.'.$request->getContent(), $secret), $signature), 401);
+        }
     }
 }

@@ -89,6 +89,7 @@
             </section>
 
             <section class="card space-y-2 text-sm">
+                <form method="POST" action="{{ route('admin.sms.check') }}" class="mb-3">@csrf<button class="btn-secondary btn-sm !w-full">{{ __('sms.check_account') }}</button></form>
                 <h2 class="text-lg">{{ __('sms.webhooks') }}</h2>
                 @if ($webhookBase)
                     <p class="label !mb-0">{{ __('sms.webhook_status') }}</p><code class="block rounded-lg bg-canvas-50 px-3 py-2 break-all select-all">{{ $webhookBase }}/status</code>

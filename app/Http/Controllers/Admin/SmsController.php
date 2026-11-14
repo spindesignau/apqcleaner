@@ -8,6 +8,7 @@ use App\Models\SmsMessage;
 use App\Models\SmsTemplate;
 use App\Services\Audit;
 use App\Services\Settings;
+use App\Services\Sms\MobileMessageGateway;
 use App\Services\Sms\SmsDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -78,6 +79,24 @@ class SmsController extends Controller
         Audit::log('sms.template_updated', $template);
 
         return back()->with('status', __('sms.template_saved'));
+    }
+
+    /** Shows the credit balance and whether the configured sender ID is approved on the account. */
+    public function checkAccount(MobileMessageGateway $gateway): RedirectResponse
+    {
+        if (! filled(config('mobilemessage.username')) || ! filled(config('mobilemessage.password'))) {
+            return back()->with('warning', __('sms.not_configured'));
+        }
+        $result = $gateway->account();
+        if (! $result['ok']) {
+            return back()->with('warning', __('sms.check_failed', ['error' => $result['error']]));
+        }
+        $sender = (string) config('mobilemessage.sender');
+        $message = __('sms.check_ok', ['balance' => rtrim(rtrim(number_format((float) $result['balance'], 2), '0'), '.'), 'senders' => implode(', ', $result['senders']) ?: '—']);
+
+        return in_array($sender, $result['senders'], true) || $result['senders'] === []
+            ? back()->with('status', $message)
+            : back()->with('status', $message)->with('warning', __('sms.sender_not_approved', ['sender' => $sender]));
     }
 
     public function sendToClient(Request $request, Client $client, SmsDispatcher $sms): RedirectResponse

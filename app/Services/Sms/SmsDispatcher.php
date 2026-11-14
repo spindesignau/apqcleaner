@@ -91,14 +91,15 @@ class SmsDispatcher
         return $now >= (string) $this->settings->get('sms.quiet_end', '08:00') && $now < (string) $this->settings->get('sms.quiet_start', '20:00');
     }
 
-    /** An Australian mobile (+614…) or an overseas number; Australian landlines can't receive SMS. */
+    /** Mobile Message only delivers to Australian mobiles (+614…); landlines and overseas numbers are skipped. */
     public static function textable(?string $number): bool
     {
-        return AuPhone::isMobile($number) || (str_starts_with((string) $number, '+') && ! str_starts_with((string) $number, '+61'));
+        return AuPhone::isMobile($number);
     }
 
     public static function segments(string $body): int
     {
+        $body = str_replace('{optout}', str_repeat('x', 20), $body);   // Mobile Message's replacement is always 20 characters
         $gsm = ! preg_match('/[^\x0A\x0D\x20-\x7E£¥èéùìòÇØøÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ¡ÄÖÑÜ§¿äöñüà€\[\]{}\\\\^~|]/u', $body);
         $len = mb_strlen($body);
 
@@ -137,8 +138,23 @@ class SmsDispatcher
         }
 
         $result = $this->gateway->send($message->to_number, $body, $ref);
+
+        // A temporary failure (busy / provider error) on an automatic message: forget the attempt so the next
+        // scheduled run tries again. The same custom_ref is reused, so the provider's idempotency still applies.
+        if (! $result['ok'] && ($result['retryable'] ?? false) && ($meta['trigger'] ?? null) === 'auto') {
+            $message->delete();
+            $message->status = 'failed';
+            $message->status_detail = mb_substr((string) $result['error'], 0, 255);
+
+            return $message;
+        }
+        // The provider's own unsubscribe list blocked it: mirror the opt-out on the client.
+        if (($result['blocked'] ?? false) && ! empty($meta['client_id'])) {
+            Client::whereKey($meta['client_id'])->update(['sms_opt_in' => false, 'sms_opted_out_at' => now()]);
+        }
+
         $message->update([
-            'status' => $result['ok'] ? 'sent' : 'failed',
+            'status' => $result['ok'] ? 'sent' : (($result['blocked'] ?? false) ? 'skipped' : 'failed'),
             'provider_message_id' => $result['provider_id'],
             'cost_credits' => $result['cost'],
             'status_detail' => $result['ok']

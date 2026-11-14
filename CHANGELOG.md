@@ -2,6 +2,18 @@
 
 Changes are listed newest first. This page is visible to administrators only.
 
+## [0.6.1] – 14 November 2026
+
+### Improved
+- **SMS checked against Mobile Message's official API documentation:**
+  - Numbers are sent in their required format.
+  - Retries can never double-send.
+  - "Out of credits" and "unsubscribed" are shown clearly.
+  - A busy moment at Mobile Message no longer loses an automatic reminder: it is tried again 5 minutes later.
+- **Check Mobile Message account** button on the SMS page: shows your credit balance and warns if the sender name isn't approved yet.
+- Reminders use Mobile Message's official opt-out wording, and clients who unsubscribe through their link are opted out here too.
+- Optional webhook signing (MOBILEMESSAGE_WEBHOOK_SECRET) for extra security.
+
 ## [0.6.0] – 14 November 2026
 
 ### New
