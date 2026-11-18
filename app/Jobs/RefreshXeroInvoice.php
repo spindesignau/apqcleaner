@@ -56,7 +56,7 @@ class RefreshXeroInvoice implements ShouldQueue
     }
 
     /** Xero dates arrive as "/Date(1731456000000+0000)/" or ISO strings. */
-    private static function xeroDate(?string $value): ?Carbon
+    public static function xeroDate(?string $value): ?Carbon
     {
         if (! $value) {
             return null;

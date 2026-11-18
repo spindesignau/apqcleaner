@@ -2,6 +2,15 @@
 
 Changes are listed newest first. This page is visible to administrators only.
 
+## [0.8.0] – 18 November 2026
+
+### New — clients sync with Xero both ways
+- **Import clients from Xero** (Xero page or Clients page). Every Xero contact is shown as *New*, *Matches an APQ client* or *Already linked*. Tick the ones you want: new ones become clients, matches get linked. Suppliers are hidden unless you choose "All contacts".
+- **Changes in APQ go to Xero.** Edit a linked client's name, email, phone or address and Xero is updated straight away.
+- **Changes in Xero come back.** They arrive instantly if the Xero webhook includes Contacts, and otherwise within the hour. There's also a **Sync now** button.
+- Only contact details sync. Prices, notes, access codes and schedules stay in APQ, and a blank field in Xero never erases anything in APQ.
+- Each client's page shows a **Xero ✓** badge when linked, or the reason when a sync fails.
+
 ## [0.7.2] – 18 November 2026
 
 ### Fixed

@@ -1,5 +1,8 @@
 <x-layouts.admin :title="__('clients.title')">
     <x-slot:actions>
+        @if (\App\Models\XeroConnection::current())
+            <a href="{{ route('admin.xero.contacts') }}" class="btn-secondary btn-sm hidden sm:inline-flex">⇩ {{ __('xero.import_title') }}</a>
+        @endif
         <a href="{{ route('admin.clients.import') }}" class="btn-secondary btn-sm hidden sm:inline-flex">⇪ {{ __('import.link') }}</a>
         <a href="{{ route('admin.clients.create') }}" class="btn-primary btn-sm hidden sm:inline-flex">+ {{ __('clients.add') }}</a>
     </x-slot:actions>

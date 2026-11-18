@@ -9,6 +9,7 @@ Schedule::command('apq:appointments:generate')->dailyAt('01:00')->timezone('Aust
 Schedule::command('apq:timers:watchdog')->everyFifteenMinutes()->withoutOverlapping();
 Schedule::command('apq:sms:send-reminders')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('apq:xero:sync-invoices')->hourly()->withoutOverlapping();
+Schedule::command('apq:xero:sync-contacts')->hourly()->withoutOverlapping();
 Schedule::command('apq:xero:keepalive')->weekly();
 Schedule::command('model:prune', ['--model' => [IntegrationLog::class]])->daily();
 Schedule::command('apq:backup')->dailyAt('02:30')->timezone('Australia/Sydney')->withoutOverlapping();

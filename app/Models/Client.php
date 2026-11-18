@@ -4,16 +4,19 @@ namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PricingModel;
+use App\Observers\ClientObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy(ClientObserver::class)]
 class Client extends Model
 {
     use HasFactory, SoftDeletes;
 
     /** Admin-only model: every write goes through an admin Form Request. */
-    protected $guarded = ['id', 'xero_contact_id', 'xero_synced_at', 'sms_opted_out_at'];
+    protected $guarded = ['id', 'xero_contact_id', 'xero_synced_at', 'xero_hash', 'xero_updated_at', 'xero_sync_error', 'sms_opted_out_at'];
 
     protected function casts(): array
     {
@@ -28,6 +31,7 @@ class Client extends Model
             'is_active' => 'boolean',
             'sms_opted_out_at' => 'datetime',
             'xero_synced_at' => 'datetime',
+            'xero_updated_at' => 'datetime',
         ];
     }
 

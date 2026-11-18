@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\RefreshXeroContact;
 use App\Jobs\RefreshXeroInvoice;
 use App\Models\IntegrationLog;
 use App\Models\XeroConnection;
@@ -26,13 +27,14 @@ class XeroWebhookController extends Controller
 
         $tenant = XeroConnection::current()?->tenant_id;
         $events = collect($request->json('events', []))
-            ->where('eventCategory', 'INVOICE')
             ->when($tenant, fn ($c) => $c->where('tenantId', $tenant));
+        $invoices = $events->where('eventCategory', 'INVOICE')->pluck('resourceId')->unique();
+        $contacts = $events->where('eventCategory', 'CONTACT')->pluck('resourceId')->unique();
 
-        foreach ($events->pluck('resourceId')->unique() as $id) {
-            RefreshXeroInvoice::dispatch($id);
-        }
-        IntegrationLog::create(['service' => 'xero', 'direction' => 'webhook', 'endpoint' => 'webhooks/xero', 'http_status' => 200, 'summary' => $events->count().' invoice event(s)']);
+        $invoices->each(fn ($id) => RefreshXeroInvoice::dispatch($id));
+        $contacts->each(fn ($id) => RefreshXeroContact::dispatch($id));
+        IntegrationLog::create(['service' => 'xero', 'direction' => 'webhook', 'endpoint' => 'webhooks/xero', 'http_status' => 200,
+            'summary' => $invoices->count().' invoice / '.$contacts->count().' contact event(s)']);
 
         return response('', 200);
     }

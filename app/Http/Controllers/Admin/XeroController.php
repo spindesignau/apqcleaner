@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\XeroConnection;
 use App\Services\Audit;
@@ -28,6 +29,12 @@ class XeroController extends Controller
             'settings' => collect(['default_account_code', 'cancellation_account_code', 'payment_terms_days', 'default_mode', 'email_by_default'])
                 ->mapWithKeys(fn ($k) => [$k => $settings->get('xero.'.$k)])->all(),
             'failed' => Invoice::where('sync_status', Invoice::SYNC_FAILED)->count(),
+            'clientStats' => [
+                'linked' => Client::whereNotNull('xero_contact_id')->count(),
+                'unlinked' => Client::active()->whereNull('xero_contact_id')->count(),
+                'errors' => Client::whereNotNull('xero_sync_error')->count(),
+                'last_sync' => $settings->get('xero.contacts_synced_at'),
+            ],
         ]);
     }
 

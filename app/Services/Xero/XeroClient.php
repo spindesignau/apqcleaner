@@ -22,9 +22,9 @@ class XeroClient
         return XeroConnection::current() ?? throw new XeroException(__('xero.not_connected'), 'not_connected');
     }
 
-    public function get(string $path, array $query = []): array
+    public function get(string $path, array $query = [], array $headers = []): array
     {
-        return $this->send('GET', $path, query: $query);
+        return $this->send('GET', $path, query: $query, headers: $headers);
     }
 
     public function post(string $path, array $body = [], array $query = [], ?string $idempotencyKey = null): array
@@ -32,14 +32,14 @@ class XeroClient
         return $this->send('POST', $path, $body, $query, $idempotencyKey);
     }
 
-    public function send(string $method, string $path, array $body = [], array $query = [], ?string $idempotencyKey = null, bool $retried = false): array
+    public function send(string $method, string $path, array $body = [], array $query = [], ?string $idempotencyKey = null, bool $retried = false, array $headers = []): array
     {
         $connection = $this->connection();
         $started = microtime(true);
 
         try {
             $request = Http::withToken($this->auth->accessToken($connection))
-                ->withHeaders(array_filter(['xero-tenant-id' => $connection->tenant_id, 'Idempotency-Key' => $idempotencyKey]))
+                ->withHeaders(array_filter(['xero-tenant-id' => $connection->tenant_id, 'Idempotency-Key' => $idempotencyKey] + $headers))
                 ->acceptJson()->timeout(30);
             $url = config('xero.urls.api').'/'.ltrim($path, '/').($query ? '?'.http_build_query($query) : '');
             /** @var Response $res */
@@ -55,7 +55,7 @@ class XeroClient
         if ($res->status() === 401 && ! $retried) {
             $connection->update(['expires_at' => now()]);   // force a refresh, then try once more
 
-            return $this->send($method, $path, $body, $query, $idempotencyKey, true);
+            return $this->send($method, $path, $body, $query, $idempotencyKey, true, $headers);
         }
 
         return match (true) {

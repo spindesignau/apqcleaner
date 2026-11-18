@@ -41,6 +41,23 @@
             @endif
         </section>
 
+        @if ($connection)
+            <section class="card space-y-4 lg:col-span-2">
+                <h2 class="text-lg">{{ __('xero.clients_sync') }}</h2>
+                <p class="text-[15px] text-navy-500">{{ __('xero.clients_sync_intro') }}</p>
+                <p class="flex flex-wrap gap-2 text-sm">
+                    <span class="badge-sage">{{ __('xero.clients_linked', ['count' => $clientStats['linked']]) }}</span>
+                    @if ($clientStats['unlinked'])<span class="badge-amber">{{ __('xero.clients_unlinked', ['count' => $clientStats['unlinked']]) }}</span>@endif
+                    @if ($clientStats['errors'])<span class="badge-alert">{{ __('xero.clients_errors', ['count' => $clientStats['errors']]) }}</span>@endif
+                    <span class="badge-sand">{{ __('xero.clients_last_sync', ['when' => $clientStats['last_sync'] ? \Illuminate\Support\Carbon::parse($clientStats['last_sync'])->diffForHumans() : __('xero.never')]) }}</span>
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('admin.xero.contacts') }}" class="btn-primary btn-sm">⇩ {{ __('xero.import_title') }}</a>
+                    <form method="POST" action="{{ route('admin.xero.contacts.sync') }}">@csrf<button class="btn-secondary btn-sm">↻ {{ __('xero.sync_now') }}</button></form>
+                </div>
+            </section>
+        @endif
+
         <form method="POST" action="{{ route('admin.xero.settings') }}" class="card space-y-4">
             @csrf
             @method('PUT')

@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SmsController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\TimesheetController;
+use App\Http\Controllers\Admin\XeroContactImportController;
 use App\Http\Controllers\Admin\XeroController;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -138,6 +139,9 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/xero/callback', [XeroController::class, 'callback'])->name('xero.callback');
             Route::post('/xero/disconnect', [XeroController::class, 'disconnect'])->name('xero.disconnect');
             Route::post('/xero/test', [XeroController::class, 'test'])->name('xero.test');
+            Route::get('/xero/contacts', [XeroContactImportController::class, 'index'])->name('xero.contacts');
+            Route::post('/xero/contacts', [XeroContactImportController::class, 'store'])->name('xero.contacts.import');
+            Route::post('/xero/contacts/sync', [XeroContactImportController::class, 'sync'])->name('xero.contacts.sync');
             Route::put('/xero/settings', [XeroController::class, 'saveSettings'])->name('xero.settings');
         });
     });

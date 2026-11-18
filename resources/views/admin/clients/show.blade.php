@@ -15,8 +15,16 @@
                     <div class="flex gap-2">
                         @unless ($client->is_active)<span class="badge-sand">{{ __('clients.inactive') }}</span>@endunless
                         @unless ($client->sms_opt_in)<span class="badge-amber">{{ __('sms.opted_out_badge') }}</span>@endunless
+                        @if ($client->xero_sync_error)
+                            <span class="badge-alert" title="{{ __('xero.client_sync_error', ['error' => $client->xero_sync_error]) }}">{{ __('xero.client_badge') }} ⚠</span>
+                        @elseif ($client->xero_contact_id)
+                            <span class="badge-sage" title="{{ __('xero.client_synced', ['when' => $client->xero_synced_at?->diffForHumans()]) }}">{{ __('xero.client_badge') }} ✓</span>
+                        @endif
                     </div>
                 </div>
+                @if ($client->xero_sync_error)
+                    <p class="mt-3 rounded-xl bg-alert-50 px-4 py-3 text-[15px] text-alert">{{ __('xero.client_sync_error', ['error' => $client->xero_sync_error]) }}</p>
+                @endif
                 <dl class="mt-4 grid gap-4 text-[15px] sm:grid-cols-2">
                     <div>
                         <dt class="label">{{ __('clients.sections.address') }}</dt>
