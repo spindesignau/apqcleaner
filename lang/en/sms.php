@@ -59,4 +59,5 @@ return [
     'check_failed' => 'Could not check the account: :error',
     'check_ok' => 'Mobile Message is working. Credit balance: :balance. Approved senders: :senders.',
     'sender_not_approved' => 'The sender ":sender" (MOBILEMESSAGE_SENDER) is not one of your approved senders — messages will be rejected until it is.',
+    'sender_number_unlisted' => 'The number ":sender" (MOBILEMESSAGE_SENDER) isn\'t in the sender list the API returns. That\'s normal for Mobile Message\'s shared or dedicated numbers — send one test SMS to confirm it\'s accepted.',
 ];

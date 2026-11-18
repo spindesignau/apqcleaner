@@ -315,6 +315,21 @@ class CancellationsAndSmsTest extends TestCase
             ->assertSessionHas('warning', fn ($w) => str_contains($w, 'APQClean'));
     }
 
+    public function test_check_account_treats_unlisted_number_as_soft_warning_and_normalises_numbers(): void
+    {
+        config(['mobilemessage.username' => 'u', 'mobilemessage.password' => 'p', 'mobilemessage.sender' => '61485900133']);
+        Http::fake([
+            'api.mobilemessage.com.au/v1/account' => Http::response(['status' => 'complete', 'credit_balance' => 50]),
+            'api.mobilemessage.com.au/v1/senders' => Http::response(['status' => 'complete', 'results' => [['sender' => '61466993688', 'type' => 'own', 'label' => 'Mine', 'is_default' => false]]]),
+        ]);
+        $this->actingAs($this->admin)->post(route('admin.sms.check'))
+            ->assertSessionHas('warning', fn ($w) => str_contains($w, 'test SMS'));
+
+        config(['mobilemessage.sender' => '0466 993 688']);
+        $this->actingAs($this->admin)->post(route('admin.sms.check'))
+            ->assertSessionHas('status')->assertSessionMissing('warning');
+    }
+
     public function test_test_recipient_redirects_outside_production(): void
     {
         config(['mobilemessage.test_recipient' => '+61499999999']);

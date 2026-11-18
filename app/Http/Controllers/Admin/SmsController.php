@@ -94,9 +94,20 @@ class SmsController extends Controller
         $sender = (string) config('mobilemessage.sender');
         $message = __('sms.check_ok', ['balance' => rtrim(rtrim(number_format((float) $result['balance'], 2), '0'), '.'), 'senders' => implode(', ', $result['senders']) ?: '—']);
 
-        return in_array($sender, $result['senders'], true) || $result['senders'] === []
-            ? back()->with('status', $message)
-            : back()->with('status', $message)->with('warning', __('sms.sender_not_approved', ['sender' => $sender]));
+        $normalise = fn (string $s): string => preg_match('/^\+?[\d\s]+$/', $s) ? preg_replace('/^0/', '61', preg_replace('/\D/', '', $s)) : strtolower(trim($s));
+        $listed = collect($result['senders'])->map($normalise)->contains($normalise($sender));
+
+        if ($listed || $result['senders'] === []) {
+            return back()->with('status', $message);
+        }
+
+        // Mobile Message's sender list only returns alpha IDs and your own verified
+        // numbers, so a shared/dedicated number may be valid without being listed.
+        $warning = preg_match('/^\+?[\d\s]+$/', $sender)
+            ? __('sms.sender_number_unlisted', ['sender' => $sender])
+            : __('sms.sender_not_approved', ['sender' => $sender]);
+
+        return back()->with('status', $message)->with('warning', $warning);
     }
 
     public function sendToClient(Request $request, Client $client, SmsDispatcher $sms): RedirectResponse

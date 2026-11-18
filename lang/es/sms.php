@@ -59,4 +59,5 @@ return [
     'check_failed' => 'No se pudo comprobar la cuenta: :error',
     'check_ok' => 'Mobile Message funciona. Créditos: :balance. Remitentes aprobados: :senders.',
     'sender_not_approved' => 'El remitente ":sender" (MOBILEMESSAGE_SENDER) no está entre tus remitentes aprobados — los mensajes se rechazarán hasta que lo esté.',
+    'sender_number_unlisted' => 'El número ":sender" (MOBILEMESSAGE_SENDER) no aparece en la lista de remitentes de la API. Es normal para los números compartidos o dedicados de Mobile Message — envía un SMS de prueba para confirmarlo.',
 ];
