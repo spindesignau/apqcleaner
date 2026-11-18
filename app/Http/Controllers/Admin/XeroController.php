@@ -80,7 +80,7 @@ class XeroController extends Controller
     {
         try {
             $org = $xero->get('Organisation')['Organisations'][0] ?? [];
-            $accounts = collect($xero->get('Accounts')['Accounts'] ?? [])->keyBy('Code');
+            $accounts = collect($xero->get('Accounts')['Accounts'] ?? [])->filter(fn ($a) => filled($a['Code'] ?? null))->keyBy('Code');
         } catch (XeroException $e) {
             return back()->withErrors(['xero' => $e->getMessage()]);
         } catch (\Throwable $e) {
@@ -92,7 +92,7 @@ class XeroController extends Controller
         $problems = [];
         foreach (['default_account_code', 'cancellation_account_code'] as $key) {
             $code = (string) $settings->get('xero.'.$key);
-            $account = $accounts->get($code);
+            $account = $code === '' ? null : $accounts->get($code);
             if (! $account) {
                 $problems[] = __('xero.account_missing', ['code' => $code]);
             } elseif (! in_array($account['Class'] ?? '', ['REVENUE'], true)) {

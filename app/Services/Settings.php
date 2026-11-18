@@ -16,7 +16,15 @@ class Settings
     {
         $all = Cache::rememberForever(self::CACHE_KEY, fn () => Setting::pluck('value', 'key')->all());
 
-        return array_key_exists($key, $all) ? $all[$key] : config('apq.defaults.'.$key, $default);
+        if (array_key_exists($key, $all)) {
+            return $all[$key];
+        }
+
+        // Default keys contain dots ("xero.default_account_code"), so look them up literally
+        // rather than via config()'s dot notation, which would treat them as nested paths.
+        $defaults = config('apq.defaults', []);
+
+        return array_key_exists($key, $defaults) ? $defaults[$key] : $default;
     }
 
     public function set(string $key, mixed $value): void

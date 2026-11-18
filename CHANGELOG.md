@@ -2,6 +2,12 @@
 
 Changes are listed newest first. This page is visible to administrators only.
 
+## [0.7.2] – 18 November 2026
+
+### Fixed
+- **Xero account check** no longer reports a bank account (such as "Smart Access") as your sales account. Built-in settings like the Sales (200) and Other Revenue (260) account codes, SMS reminder times and timer limits now correctly fall back to their defaults until you change them.
+- **SMS account check** no longer warns about Mobile Message's shared or dedicated numbers, which their API doesn't list. It now suggests sending a test SMS instead, and matches numbers however they're written (0466…, +61466…, 61466…).
+
 ## [0.7.1] – 14 November 2026
 
 ### Improved — smoother everywhere

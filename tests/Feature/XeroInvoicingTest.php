@@ -415,4 +415,13 @@ class XeroInvoicingTest extends TestCase
         $this->actingAs($staff)->get(route('admin.invoices.index'))->assertForbidden();
         $this->actingAs($staff)->get(route('admin.xero.show'))->assertForbidden();
     }
+
+    public function test_dotted_setting_defaults_resolve_and_codeless_accounts_never_match(): void
+    {
+        $settings = app(\App\Services\Settings::class);
+        $this->assertSame('200', $settings->get('xero.default_account_code'));
+        $this->assertSame('260', $settings->get('xero.cancellation_account_code'));
+        $this->assertTrue($settings->get('sms.reminders_enabled'));
+        $this->assertSame('fallback', $settings->get('no.such.key', 'fallback'));
+    }
 }
