@@ -394,8 +394,10 @@ class XeroInvoicingTest extends TestCase
         $this->approved($client, '2026-11-03 09:00', 180);
         Queue::fake();
 
-        $this->actingAs($this->admin)->get(route('admin.invoices.run'))
-            ->assertOk()->assertSee('Harbour Example')->assertSee('$275.00');   // defaults to last month (November)
+        $this->actingAs($this->admin)->get(route('admin.invoices.run'))   // defaults to 1st of this month → today
+            ->assertOk()->assertSee('value="2026-12-01"', false)->assertSee('value="2026-12-02"', false)->assertDontSee('Harbour Example');
+        $this->get(route('admin.invoices.run', ['from' => '2026-11-01', 'to' => '2026-11-30']))
+            ->assertOk()->assertSee('Harbour Example')->assertSee('$275.00');
 
         $this->post(route('admin.invoices.run.store'), ['from' => '2026-11-01', 'to' => '2026-11-30', 'mode' => 'draft', 'clients' => [$client->id]])
             ->assertRedirect();

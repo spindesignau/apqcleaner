@@ -11,6 +11,9 @@ Changes are listed newest first. This page is visible to administrators only.
 - Only contact details sync. Prices, notes, access codes and schedules stay in APQ, and a blank field in Xero never erases anything in APQ.
 - Each client's page shows a **Xero ✓** badge when linked, or the reason when a sync fails.
 
+### Changed
+- **Create invoices** now opens on the 1st of this month to today, instead of last month. You can still change the dates.
+
 ## [0.7.2] – 18 November 2026
 
 ### Fixed

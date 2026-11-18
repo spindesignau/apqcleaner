@@ -129,12 +129,12 @@ class InvoiceController extends Controller
             'mode' => ['nullable', Rule::in(['draft', 'authorised'])], 'frequency' => ['nullable', Rule::in(self::FREQUENCIES)],
         ]);
         $tz = config('apq.display_timezone');
-        $lastMonth = Carbon::now($tz)->subMonthNoOverflow();
+        $today = Carbon::now($tz);   // default range: 1st of this month → today
         $mode = $request->input('mode', $settings->get('xero.default_mode', 'draft'));
 
         return [
-            'from' => $request->filled('from') ? Carbon::parse($request->input('from'), $tz)->startOfDay() : $lastMonth->copy()->startOfMonth(),
-            'to' => $request->filled('to') ? Carbon::parse($request->input('to'), $tz)->endOfDay() : $lastMonth->copy()->endOfMonth(),
+            'from' => $request->filled('from') ? Carbon::parse($request->input('from'), $tz)->startOfDay() : $today->copy()->startOfMonth(),
+            'to' => $request->filled('to') ? Carbon::parse($request->input('to'), $tz)->endOfDay() : $today->copy()->endOfDay(),
             'mode' => $mode,
             'email' => $mode === 'authorised' && ($request->has('mode') ? $request->boolean('email') : (bool) $settings->get('xero.email_by_default')),
             'frequency' => $request->input('frequency') ?: null,
