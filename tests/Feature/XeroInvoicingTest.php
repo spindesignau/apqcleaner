@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\XeroConnection;
+use App\Services\Settings;
 use App\Services\Xero\XeroContacts;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -418,7 +419,7 @@ class XeroInvoicingTest extends TestCase
 
     public function test_dotted_setting_defaults_resolve_and_codeless_accounts_never_match(): void
     {
-        $settings = app(\App\Services\Settings::class);
+        $settings = app(Settings::class);
         $this->assertSame('200', $settings->get('xero.default_account_code'));
         $this->assertSame('260', $settings->get('xero.cancellation_account_code'));
         $this->assertTrue($settings->get('sms.reminders_enabled'));
