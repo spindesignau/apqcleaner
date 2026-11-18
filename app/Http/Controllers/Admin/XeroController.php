@@ -26,8 +26,10 @@ class XeroController extends Controller
             'connection' => XeroConnection::current()?->load('connectedBy'),
             'redirectUri' => config('xero.redirect_uri'),
             'webhookUrl' => url('/webhooks/xero'),
-            'settings' => collect(['default_account_code', 'cancellation_account_code', 'payment_terms_days', 'default_mode', 'email_by_default'])
-                ->mapWithKeys(fn ($k) => [$k => $settings->get('xero.'.$k)])->all(),
+            'settings' => collect(['default_account_code', 'cancellation_account_code', 'payment_terms_days'])
+                ->mapWithKeys(fn ($k) => [$k => $settings->get('xero.'.$k)])
+                ->put('sending', $settings->get('xero.default_mode') !== 'authorised' ? 'draft' : ($settings->get('xero.email_by_default') ? 'send' : 'approve'))
+                ->all(),
             'failed' => Invoice::where('sync_status', Invoice::SYNC_FAILED)->count(),
             'clientStats' => [
                 'linked' => Client::whereNotNull('xero_contact_id')->count(),
@@ -120,12 +122,15 @@ class XeroController extends Controller
             'default_account_code' => ['required', 'string', 'max:10'],
             'cancellation_account_code' => ['required', 'string', 'max:10'],
             'payment_terms_days' => ['required', 'integer', 'min:0', 'max:90'],
-            'default_mode' => ['required', Rule::in(['draft', 'authorised'])],
-            'email_by_default' => ['nullable', 'boolean'],
-        ], attributes: collect(['default_account_code', 'cancellation_account_code', 'payment_terms_days', 'default_mode'])
+            'sending' => ['required', Rule::in(['draft', 'approve', 'send'])],
+        ], attributes: collect(['default_account_code', 'cancellation_account_code', 'payment_terms_days', 'sending'])
             ->mapWithKeys(fn ($k) => [$k => __('xero.fields.'.$k)])->all());
 
-        $data['email_by_default'] = $request->boolean('email_by_default');
+        // One choice drives both stored settings: draft · approved · approved and emailed by Xero.
+        $sending = $data['sending'];
+        unset($data['sending']);
+        $data['default_mode'] = $sending === 'draft' ? 'draft' : 'authorised';
+        $data['email_by_default'] = $sending === 'send';
         foreach ($data as $key => $value) {
             $settings->set('xero.'.$key, $value);
         }

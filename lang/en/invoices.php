@@ -52,4 +52,7 @@ return [
     'emailed' => 'Emailed :date',
     'paid' => 'Paid :date',
     'uninvoiced' => 'Approved, not invoiced',
+    'create_and_email' => 'Create and email :count invoices',
+    'email_confirm' => 'These invoices will be approved in Xero and emailed to the clients straight away. Continue?',
+    'email_confirm_ok' => 'Create and email',
 ];

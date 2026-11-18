@@ -25,11 +25,10 @@ return [
     'settings' => 'Invoice settings',
     'settings_saved' => 'Invoice settings saved.',
     'fields' => [
+        'sending' => 'When you create invoices',
         'default_account_code' => 'Account code for cleaning',
         'cancellation_account_code' => 'Account code for cancellation fees',
         'payment_terms_days' => 'Payment terms (days)',
-        'default_mode' => 'New invoices start as',
-        'email_by_default' => 'Email approved invoices to clients by default',
     ],
     'modes' => ['draft' => 'Draft (review in Xero first)', 'authorised' => 'Approved (ready to send)'],
     'failed_banner' => '{1} 1 invoice failed to reach Xero.|[2,*] :count invoices failed to reach Xero.',
@@ -72,4 +71,10 @@ return [
     'client_synced' => 'Synced with Xero :when',
     'client_not_linked' => 'Not linked to Xero yet',
     'client_sync_error' => 'Xero sync failed: :error',
+    'sending' => ['draft' => 'Draft in Xero', 'approve' => 'Approved in Xero', 'send' => 'Approved and emailed to the client by Xero'],
+    'sending_help' => [
+        'draft' => 'You review and send each invoice from Xero yourself.',
+        'approve' => 'Ready to send, but you press Send in Xero.',
+        'send' => 'Sent automatically as soon as you create them (to clients with an email address). You can still change this on each run.',
+    ],
 ];

@@ -13,6 +13,7 @@ Changes are listed newest first. This page is visible to administrators only.
 
 ### Changed
 - **Create invoices** now opens on the 1st of this month to today, instead of last month. You can still change the dates.
+- **Send invoices automatically:** Xero → Invoice settings has one simple choice: *Draft*, *Approved*, or *Approved and emailed to the client by Xero*. With the last one, every invoice run is approved and emailed as soon as you press Create. You're asked to confirm first, and you can still switch it off for a single run.
 
 ## [0.7.2] – 18 November 2026
 

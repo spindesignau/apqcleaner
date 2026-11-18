@@ -25,11 +25,10 @@ return [
     'settings' => 'Configuración de facturas',
     'settings_saved' => 'Configuración guardada.',
     'fields' => [
+        'sending' => 'Al crear facturas',
         'default_account_code' => 'Código de cuenta para limpieza',
         'cancellation_account_code' => 'Código de cuenta para cargos por cancelación',
         'payment_terms_days' => 'Plazo de pago (días)',
-        'default_mode' => 'Las facturas nuevas se crean como',
-        'email_by_default' => 'Enviar por correo las facturas aprobadas por defecto',
     ],
     'modes' => ['draft' => 'Borrador (revisar primero en Xero)', 'authorised' => 'Aprobada (lista para enviar)'],
     'failed_banner' => '{1} 1 factura no llegó a Xero.|[2,*] :count facturas no llegaron a Xero.',
@@ -72,4 +71,10 @@ return [
     'client_synced' => 'Sincronizado con Xero :when',
     'client_not_linked' => 'Aún no vinculado con Xero',
     'client_sync_error' => 'Error al sincronizar con Xero: :error',
+    'sending' => ['draft' => 'Borrador en Xero', 'approve' => 'Aprobada en Xero', 'send' => 'Aprobada y enviada al cliente por Xero'],
+    'sending_help' => [
+        'draft' => 'Revisas y envías cada factura desde Xero.',
+        'approve' => 'Lista para enviar, pero pulsas Enviar en Xero.',
+        'send' => 'Se envía automáticamente al crearla (a clientes con correo). Puedes cambiarlo en cada creación.',
+    ],
 ];

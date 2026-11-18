@@ -427,4 +427,31 @@ class XeroInvoicingTest extends TestCase
         $this->assertTrue($settings->get('sms.reminders_enabled'));
         $this->assertSame('fallback', $settings->get('no.such.key', 'fallback'));
     }
+
+    public function test_sending_setting_makes_runs_default_to_approved_and_emailed(): void
+    {
+        $this->connect();
+        $client = Client::factory()->create(['fixed_price' => 250, 'display_name' => 'Harbour Example']);
+        $this->approved($client, '2026-12-01 09:00', 180);
+
+        $this->actingAs($this->admin)->put(route('admin.xero.settings'), [
+            'default_account_code' => '200', 'cancellation_account_code' => '260', 'payment_terms_days' => 7, 'sending' => 'send',
+        ])->assertSessionHasNoErrors();
+        $this->assertSame('authorised', app(Settings::class)->get('xero.default_mode'));
+        $this->assertTrue(app(Settings::class)->get('xero.email_by_default'));
+        $this->get(route('admin.xero.show'))->assertSee('value="send" checked', false);
+
+        $this->get(route('admin.invoices.run'))->assertOk()
+            ->assertSee(__('invoices.create_and_email', ['count' => 1]))->assertSee(__('invoices.email_confirm'));
+
+        Queue::fake();
+        $this->post(route('admin.invoices.run.store'), ['from' => '2026-12-01', 'to' => '2026-12-02', 'mode' => 'authorised', 'email' => '1', 'clients' => [$client->id]]);
+        $this->assertTrue((bool) Invoice::firstOrFail()->send_email);
+
+        $this->put(route('admin.xero.settings'), [
+            'default_account_code' => '200', 'cancellation_account_code' => '260', 'payment_terms_days' => 7, 'sending' => 'draft',
+        ]);
+        $this->assertSame('draft', app(Settings::class)->get('xero.default_mode'));
+        $this->assertFalse(app(Settings::class)->get('xero.email_by_default'));
+    }
 }

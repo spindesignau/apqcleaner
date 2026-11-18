@@ -38,7 +38,9 @@
     @if ($count === 0)
         <div class="card mt-4 py-10 text-center text-navy-500">{{ __('invoices.nothing') }}</div>
     @else
-        <form method="POST" action="{{ route('admin.invoices.run.store') }}" class="mt-4" x-data="{ selected: @js($preview->pluck('client.id')->map(fn ($i) => (string) $i)->values()) }">
+        <form method="POST" action="{{ route('admin.invoices.run.store') }}" class="mt-4"
+              @if ($email) data-confirm="{{ __('invoices.email_confirm') }}" data-confirm-ok="{{ __('invoices.email_confirm_ok') }}" @endif
+              x-data="{ selected: @js($preview->pluck('client.id')->map(fn ($i) => (string) $i)->values()) }">
             @csrf
             @foreach (['from' => $from->toDateString(), 'to' => $to->toDateString(), 'mode' => $mode, 'frequency' => $frequency] as $k => $v)
                 <input type="hidden" name="{{ $k }}" value="{{ $v }}">
@@ -91,7 +93,8 @@
                 </table>
             </div>
             <button type="submit" class="btn-primary mt-4 sm:w-auto" :disabled="selected.length === 0" @disabled(! $connected)>
-                ✓ <span x-text="@js(__('invoices.create', ['count' => '__N__'])).replace('__N__', selected.length)">{{ __('invoices.create', ['count' => $count]) }}</span>
+                @php($createKey = $email ? 'invoices.create_and_email' : 'invoices.create')
+                {{ $email ? '✉' : '✓' }} <span x-text="@js(__($createKey, ['count' => '__N__'])).replace('__N__', selected.length)">{{ __($createKey, ['count' => $count]) }}</span>
             </button>
         </form>
     @endif

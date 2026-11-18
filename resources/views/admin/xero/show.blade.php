@@ -74,17 +74,18 @@
                     <label for="payment_terms_days" class="label">{{ __('xero.fields.payment_terms_days') }}</label>
                     <input id="payment_terms_days" name="payment_terms_days" type="number" min="0" max="90" required value="{{ old('payment_terms_days', $settings['payment_terms_days']) }}" class="input">
                 </div>
-                <div>
-                    <label for="default_mode" class="label">{{ __('xero.fields.default_mode') }}</label>
-                    <select id="default_mode" name="default_mode" class="input">
-                        @foreach (['draft', 'authorised'] as $m)<option value="{{ $m }}" @selected(old('default_mode', $settings['default_mode']) === $m)>{{ __('xero.modes.'.$m) }}</option>@endforeach
-                    </select>
-                </div>
             </div>
-            <label class="flex items-center gap-3">
-                <input type="checkbox" name="email_by_default" value="1" @checked(old('email_by_default', $settings['email_by_default'])) class="size-6 rounded-md border-sand-600 text-navy focus:ring-sage">
-                {{ __('xero.fields.email_by_default') }}
-            </label>
+            <fieldset>
+                <legend class="label">{{ __('xero.fields.sending') }}</legend>
+                <div class="mt-1 space-y-2">
+                    @foreach (['draft', 'approve', 'send'] as $option)
+                        <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-sand px-4 py-3 has-checked:border-navy has-checked:bg-canvas-50">
+                            <input type="radio" name="sending" value="{{ $option }}" @checked(old('sending', $settings['sending']) === $option) class="mt-1 size-5 border-sand-600 text-navy focus:ring-sage">
+                            <span><span class="font-semibold">{{ __('xero.sending.'.$option) }}</span><br><span class="text-sm text-navy-500">{{ __('xero.sending_help.'.$option) }}</span></span>
+                        </label>
+                    @endforeach
+                </div>
+            </fieldset>
             <button type="submit" class="btn-primary sm:w-auto">{{ __('common.save') }}</button>
         </form>
     </div>

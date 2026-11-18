@@ -52,4 +52,7 @@ return [
     'emailed' => 'Enviada :date',
     'paid' => 'Pagada :date',
     'uninvoiced' => 'Aprobado, sin facturar',
+    'create_and_email' => 'Crear y enviar :count facturas',
+    'email_confirm' => 'Estas facturas se aprobarán en Xero y se enviarán por correo a los clientes al momento. ¿Continuar?',
+    'email_confirm_ok' => 'Crear y enviar',
 ];
