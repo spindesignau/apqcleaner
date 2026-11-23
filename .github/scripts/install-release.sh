@@ -22,6 +22,14 @@ done
 # Keep the AutoSSL challenge folder if cPanel created one in the document root.
 if [ -d public/.well-known ]; then rm -rf .deploy/well-known.keep; mv public/.well-known .deploy/well-known.keep; fi
 
+# Keep cPanel's PHP version block (MultiPHP Manager writes it into the document root's .htaccess).
+PHP_BEGIN='# php -- BEGIN cPanel-generated handler, do not edit'
+PHP_END='# php -- END cPanel-generated handler, do not edit'
+rm -f .deploy/php-handler.keep
+if [ -f public/.htaccess ] && grep -qF "$PHP_BEGIN" public/.htaccess; then
+  sed -n "\|$PHP_BEGIN|,\|$PHP_END|p" public/.htaccess > .deploy/php-handler.keep
+fi
+
 # Remove top-level items shipped by the previous release that the new one no longer has.
 if [ -f .deploy/manifest ]; then
   while IFS= read -r item; do
@@ -41,5 +49,9 @@ done < .deploy/manifest.new
 mv .deploy/manifest.new .deploy/manifest
 
 if [ -d .deploy/well-known.keep ]; then mv .deploy/well-known.keep public/.well-known; fi
+if [ -s .deploy/php-handler.keep ] && ! grep -qF "$PHP_BEGIN" public/.htaccess; then
+  { echo; cat .deploy/php-handler.keep; } >> public/.htaccess
+fi
+rm -f .deploy/php-handler.keep
 rm -rf .deploy/new .deploy/release.tar.gz
 echo "Release installed: $(wc -l < .deploy/manifest) top-level items"

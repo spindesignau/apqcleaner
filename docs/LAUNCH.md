@@ -8,9 +8,9 @@ Order matters: **set up the server → deploy the code → copy the data → rec
 
 - [ ] **WHM → Create a New Account:** domain `apqcleaner.com.au`. Note the **username** (written `CPANELUSER` below).
 - [ ] **DNS:** at the domain registrar, point `apqcleaner.com.au` at this server. Use the server's nameservers, or an A record for `@` and `www` → `43.250.141.96` if it's the same server as staging. Wait until the domain loads the cPanel placeholder page.
-- [ ] **cPanel → Domains:** set the document root of `apqcleaner.com.au` to **`/home/CPANELUSER/apqcleaner/public`**.
+- [ ] **Document root:** leave it as `/public_html`. cPanel doesn't allow changing it for the main domain, so the first live deploy turns `~/public_html` into a link to the app's `public` folder. The old folder is kept as `public_html.before-apq-…`. Leave `public_html` empty (cPanel's own `cgi-bin` and `.htaccess` are fine).
 - [ ] **cPanel → SSL/TLS Status → Run AutoSSL**, so the padlock shows on `https://apqcleaner.com.au`.
-- [ ] **MultiPHP Manager:** PHP **8.4** for the domain. Same extensions as staging (DEPLOY-STAGING step 2).
+- [ ] **MultiPHP Manager:** PHP **8.4** for the domain (do this *before* the first deploy, so the setting is carried over). Same extensions as staging (DEPLOY-STAGING step 2).
 - [ ] **MySQL Databases:** create a new database and user (not staging's), and give the user **All privileges** on it.
 - [ ] **SSH Access → Manage SSH Keys:** generate a key (a passphrase is fine), **Authorize** it, and copy the **private key**.
 - [ ] **Email Accounts:** create e.g. `hello@apqcleaner.com.au`, so password-reset emails come from the business domain.
@@ -66,7 +66,7 @@ In the repository: **Settings → Secrets and variables → Actions**.
 
 ## 4. Deploy the code
 
-- [ ] **Actions → deploy-production → Run workflow.** It checks `.env`, uploads the app, creates `APP_KEY`, sets up the database, **installs the every-minute cron job**, and checks `/up` and `/login`.
+- [ ] **Actions → deploy-production → Run workflow.** It checks `.env`, uploads the app, points `public_html` at it, creates `APP_KEY`, sets up the database, **installs the every-minute cron job**, and checks `/up` and `/login`.
 
 Live deploys never happen on an ordinary push: only from this button, or by pushing a version tag (`git tag v1.0.0 && git push origin v1.0.0`).
 

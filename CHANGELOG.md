@@ -6,6 +6,7 @@ Changes are listed newest first. This page is visible to administrators only.
 
 ### Moving to apqcleaner.com.au
 - **Copy staging to the live site** in one step (GitHub → Actions → copy-staging-to-production). Clients, cleaners, logins, schedules, timesheets and invoices all come across. The live site's previous data is backed up first.
+- **The main domain works without root access:** the live deploy links `public_html` to the app, and keeps cPanel's PHP version setting through every deploy.
 - **The every-minute scheduled task is now set up automatically** on each deploy, so invoices don't get stuck on "Sending…" and reminders and backups run without extra cPanel setup.
 - **Staging can no longer text real clients.** Without a test phone number set, staging records messages as "not sent" instead of sending them. After the copy, staging is also disconnected from Xero, so it can't create real invoices.
 

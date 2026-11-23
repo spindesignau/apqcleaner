@@ -151,6 +151,10 @@ jobs:
           ssh staging "mkdir -p '$APP_PATH/.deploy' && cat > '$APP_PATH/.deploy/release.tar.gz'" < "$RUNNER_TEMP/release.tar.gz"
           ssh staging "bash -s -- '$APP_PATH'" < .github/scripts/install-release.sh
 
+      - name: Point public_html at the app
+        # The main domain's document root can't be changed on cPanel without root, so ~/public_html becomes a link to the app.
+        run: ssh staging "bash -s -- '$APP_PATH'" < .github/scripts/link-public-html.sh
+
       - name: Migrate and warm caches
         run: |
           ssh staging "set -e
