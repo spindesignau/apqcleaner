@@ -168,6 +168,9 @@ jobs:
             $PHP_BIN artisan optimize
             $PHP_BIN artisan queue:restart"
 
+      - name: Scheduler cron job
+        run: ssh staging "bash -s -- '$APP_PATH' '$PHP_BIN'" < .github/scripts/ensure-cron.sh
+
       - name: Maintenance mode off
         if: always() && steps.ssh.outcome == 'success'
         run: ssh staging "cd '$APP_PATH' && [ -f artisan ] && $PHP_BIN artisan up || true"

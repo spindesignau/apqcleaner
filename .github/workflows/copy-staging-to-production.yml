@@ -1,0 +1,93 @@
+name: copy-staging-to-production
+
+# One-off move of staging's data to the live site (Actions → copy-staging-to-production → Run workflow, type COPY).
+#  1. Backs up staging's database (apq:backup) and downloads it.
+#  2. Backs up the live database too (kept on the live server), then replaces it with staging's data (apq:restore).
+#  3. Removes staging's Xero connection so staging can't create real invoices (the live site connects to Xero itself).
+# The live site must have been deployed once first (deploy-production). Uses both STAGING_* and PRODUCTION_* secrets.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type COPY to replace ALL data on the live site with staging''s data'
+        required: true
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  copy:
+    if: github.event.inputs.confirm == 'COPY'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    env:
+      STAGING_PATH: ${{ secrets.STAGING_APP_PATH }}
+      LIVE_PATH: ${{ secrets.PRODUCTION_APP_PATH }}
+      STAGING_PHP: ${{ vars.STAGING_PHP_BIN || 'php' }}
+      LIVE_PHP: ${{ vars.PRODUCTION_PHP_BIN || 'php' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Connect to staging
+        env:
+          HOST: ${{ secrets.STAGING_SSH_HOST }}
+          PORT: ${{ secrets.STAGING_SSH_PORT }}
+          USER: ${{ secrets.STAGING_SSH_USER }}
+          KEY: ${{ secrets.STAGING_SSH_KEY }}
+          PASSPHRASE: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        run: .github/scripts/ssh-alias.sh staging
+
+      - name: Connect to the live site
+        env:
+          HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          PORT: ${{ secrets.PRODUCTION_SSH_PORT }}
+          USER: ${{ secrets.PRODUCTION_SSH_USER }}
+          KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          PASSPHRASE: ${{ secrets.PRODUCTION_SSH_PASSPHRASE }}
+          KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: |
+          .github/scripts/ssh-alias.sh live
+          ssh live "test -f '${LIVE_PATH%/}/artisan'" || { echo "::error::The live site has no app yet — run deploy-production first."; exit 1; }
+
+      - name: Back up staging and download
+        run: |
+          S="${STAGING_PATH%/}"
+          ssh staging "cd '$S' && $STAGING_PHP artisan apq:backup"
+          file=$(ssh staging "cd '$S' && ls -t storage/app/private/backups/apq-db-* | head -1")
+          ssh staging "cat '$S/$file'" > "$RUNNER_TEMP/staging.sql.gz"
+          gzip -t "$RUNNER_TEMP/staging.sql.gz"
+          echo "Downloaded $file ($(du -h "$RUNNER_TEMP/staging.sql.gz" | cut -f1))"
+
+      - name: Back up the live site, then load staging's data
+        run: |
+          L="${LIVE_PATH%/}"
+          ssh live "cd '$L' && $LIVE_PHP artisan apq:backup"   # safety copy of whatever was there
+          ssh live "mkdir -p '$L/storage/app/private/restore' && cat > '$L/storage/app/private/restore/staging.sql.gz'" < "$RUNNER_TEMP/staging.sql.gz"
+          ssh live "set -e
+            cd '$L'
+            $LIVE_PHP artisan down --retry=30 || true
+            $LIVE_PHP artisan apq:restore storage/app/private/restore/staging.sql.gz --force
+            rm -f storage/app/private/restore/staging.sql.gz
+            $LIVE_PHP artisan optimize:clear
+            $LIVE_PHP artisan optimize
+            $LIVE_PHP artisan queue:restart
+            $LIVE_PHP artisan up"
+
+      - name: Disconnect staging from Xero
+        run: ssh staging "cd '${STAGING_PATH%/}' && $STAGING_PHP artisan apq:xero:forget"
+
+      - name: Live site still up?
+        if: always()
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' "${{ vars.PRODUCTION_URL }}/login")
+          echo "/login → $code"
+          if [ "$code" != "200" ]; then
+            ssh live "cd '${LIVE_PATH%/}' && $LIVE_PHP artisan up" || true
+            echo "::error::The live site isn't answering. A backup of its previous data is in storage/app/private/backups on the live server."
+            exit 1
+          fi

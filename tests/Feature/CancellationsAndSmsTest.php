@@ -353,6 +353,24 @@ class CancellationsAndSmsTest extends TestCase
         $this->assertStringContainsString('+61422222222', SmsMessage::sole()->status_detail);
     }
 
+    public function test_staging_never_texts_real_clients_without_a_test_recipient(): void
+    {
+        config(['mobilemessage.test_recipient' => null]);
+        $this->app['env'] = 'staging';
+        $this->app->bind(SmsGateway::class, fn () => new class implements SmsGateway
+        {
+            public function send(string $to, string $body, string $customRef): array
+            {
+                throw new \RuntimeException('must not send from staging');
+            }
+        });
+
+        app(SmsDispatcher::class)->freeText($this->client, 'Hello', $this->admin);
+
+        $this->assertSame('skipped', SmsMessage::sole()->status);
+        $this->assertSame(__('sms.skip_staging'), SmsMessage::sole()->status_detail);
+    }
+
     public function test_webhooks_need_token_update_delivery_and_stop_opts_out(): void
     {
         config(['mobilemessage.webhook_token' => 'secret-token']);

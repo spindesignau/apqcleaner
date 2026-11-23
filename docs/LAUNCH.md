@@ -1,106 +1,118 @@
-# Launch checklist: staging → live site
+# Moving to the live site: apqcleaner.com.au
 
-This assumes staging (apqcleaner.spinstaging.com) is working and has been trialled. The live site is set up the same way as staging (see [DEPLOY-STAGING.md](DEPLOY-STAGING.md)), with its own database, `.env` and secrets. Staging stays as the place to try changes first.
+Staging (apqcleaner.spinstaging.com) keeps running as the place to try changes. The live site gets its own cPanel account, database, `.env` and GitHub secrets, plus a copy of staging's data.
 
-> Replace `LIVE-DOMAIN` with the real address (e.g. `app.apqcleaning.com.au`) and `CPANELUSER` with the live cPanel account.
+Order matters: **set up the server → deploy the code → copy the data → reconnect Xero and Mobile Message → switch staging to test mode.**
 
-## 1. Before launch day
+## 1. Create the cPanel account (WHM)
 
-- [ ] **Trial on staging:** at least one full pay fortnight with real cleaners (START/STOP/SUBMIT) and one invoice run into the Xero **Demo Company**.
-- [ ] **Confirm the owner's settings:**
-  - The pay fortnight start (`pay_period_anchor`, currently Mon 5 Jan 2026).
-  - Billing rounding for hourly clients (15 min, no minimum).
-  - Default cancellation fee (50%, 24 h).
-- [ ] **Clients:** prices, regular schedules, cancellation rules and mobiles checked. Run Reports → *Revenue by client* on staging as a sanity check.
-- [ ] **Cleaners:** real emails, pay rates (including Saturday/Sunday) and mobiles.
-- [ ] **Logo:** replace the placeholder logo in `brand/` and `public/icons/` with the designer's master files.
+- [ ] **WHM → Create a New Account:** domain `apqcleaner.com.au`. Note the **username** (written `CPANELUSER` below).
+- [ ] **DNS:** at the domain registrar, point `apqcleaner.com.au` at this server. Use the server's nameservers, or an A record for `@` and `www` → `43.250.141.96` if it's the same server as staging. Wait until the domain loads the cPanel placeholder page.
+- [ ] **cPanel → Domains:** set the document root of `apqcleaner.com.au` to **`/home/CPANELUSER/apqcleaner/public`**.
+- [ ] **cPanel → SSL/TLS Status → Run AutoSSL**, so the padlock shows on `https://apqcleaner.com.au`.
+- [ ] **MultiPHP Manager:** PHP **8.4** for the domain. Same extensions as staging (DEPLOY-STAGING step 2).
+- [ ] **MySQL Databases:** create a new database and user (not staging's), and give the user **All privileges** on it.
+- [ ] **SSH Access → Manage SSH Keys:** generate a key (a passphrase is fine), **Authorize** it, and copy the **private key**.
+- [ ] **Email Accounts:** create e.g. `hello@apqcleaner.com.au`, so password-reset emails come from the business domain.
 
-## 2. Server (cPanel)
+## 2. The live `.env`
 
-- [ ] **Domain:** add `LIVE-DOMAIN`. Set the **document root to `/home/CPANELUSER/apqcleaner/public`** and run **AutoSSL**.
-- [ ] **PHP 8.4** for the domain in MultiPHP Manager, with the extensions listed in DEPLOY-STAGING step 2.
-- [ ] **Database:** a new database and user (do *not* reuse staging's).
-- [ ] **SSH:** a key authorised for the live account, plus `ssh-keyscan -p <port> <host>` output for the known-hosts secret.
-- [ ] **`.env`** at `~/apqcleaner/.env`. Copy from staging, then change:
+In **File Manager**, create the folder `/home/CPANELUSER/apqcleaner` and a file `.env` inside it. Copy staging's `.env`, then change these lines:
 
 ```dotenv
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://LIVE-DOMAIN
-APP_KEY=                      # leave empty: the first deploy generates it
-DB_DATABASE=...  DB_USERNAME=...  DB_PASSWORD="..."
+APP_URL=https://apqcleaner.com.au
+APP_KEY=                       # leave empty: the first deploy creates it
+
+DB_DATABASE=CPANELUSER_apq     # the new database
+DB_USERNAME=CPANELUSER_apq
+DB_PASSWORD="..."
+
 SESSION_SECURE_COOKIE=true
-MAIL_MAILER=smtp              # real mail settings, for password resets
-MAIL_HOST=...  MAIL_PORT=465  MAIL_USERNAME=...  MAIL_PASSWORD="..."  MAIL_FROM_ADDRESS=hello@...
-APQ_ADMIN_EMAIL=...           # the owner's login
-SMS_ENABLED=true              # real SMS (leave false until the Mobile Message account is ready)
-SMS_TEST_RECIPIENT=           # must be EMPTY in production
-MOBILEMESSAGE_USERNAME=...  MOBILEMESSAGE_PASSWORD="..."  MOBILEMESSAGE_SENDER=...
-MOBILEMESSAGE_WEBHOOK_TOKEN=<long random string>
-MOBILEMESSAGE_WEBHOOK_SECRET=<from Mobile Message Settings > API>
-XERO_CLIENT_ID=...  XERO_CLIENT_SECRET="..."  XERO_WEBHOOK_KEY=...
+
+MAIL_MAILER=smtp
+MAIL_HOST=mail.apqcleaner.com.au
+MAIL_PORT=465
+MAIL_USERNAME=hello@apqcleaner.com.au
+MAIL_PASSWORD="..."
+MAIL_FROM_ADDRESS=hello@apqcleaner.com.au
+
+SMS_ENABLED=true
+SMS_TEST_RECIPIENT=            # must be EMPTY on the live site
+MOBILEMESSAGE_WEBHOOK_TOKEN=   # a NEW long random string (not staging's)
 ```
 
-  Put any value containing spaces, `#` or `$` in "double quotes".
+Keep the Mobile Message username/password/sender and the Xero client ID/secret the same as staging. Put any value containing spaces, `#` or `$` in "double quotes".
 
-## 3. GitHub
+## 3. GitHub settings
 
-- [ ] **Secrets** (Settings → Secrets and variables → Actions): `PRODUCTION_SSH_HOST`, `PRODUCTION_SSH_PORT`, `PRODUCTION_SSH_USER`, `PRODUCTION_SSH_KEY`, `PRODUCTION_SSH_PASSPHRASE` (if the key has one), `PRODUCTION_SSH_KNOWN_HOSTS`, `PRODUCTION_APP_PATH`.
-- [ ] **Variables:** `PRODUCTION_URL=https://LIVE-DOMAIN`, `PRODUCTION_PHP_BIN=/usr/local/bin/ea-php84`, `PRODUCTION_ENABLED=true`.
-- [ ] **Recommended:** Settings → Environments → **production** → *Required reviewers*. GitHub then waits for an owner's click before each live deploy.
+In the repository: **Settings → Secrets and variables → Actions**.
 
-Live deploys never happen on an ordinary push. Run **Actions → deploy-production → Run workflow**, or push a version tag:
+- [ ] **Secrets:**
 
-```bash
-git tag v1.0.0 && git push origin v1.0.0
+| Secret | Value |
+| --- | --- |
+| `PRODUCTION_SSH_HOST` | `43.250.141.96` (or the new server's address) |
+| `PRODUCTION_SSH_PORT` | `2222` |
+| `PRODUCTION_SSH_USER` | `CPANELUSER` |
+| `PRODUCTION_SSH_KEY` | the private key from step 1 |
+| `PRODUCTION_SSH_PASSPHRASE` | its passphrase (if it has one) |
+| `PRODUCTION_SSH_KNOWN_HOSTS` | the same value as `STAGING_SSH_KNOWN_HOSTS` if it's the same server; otherwise the output of `ssh-keyscan -p 2222 <server>` |
+| `PRODUCTION_APP_PATH` | `/home/CPANELUSER/apqcleaner` |
+
+- [ ] **Variables:** `PRODUCTION_URL` = `https://apqcleaner.com.au`, `PRODUCTION_PHP_BIN` = `/usr/local/bin/ea-php84`, `PRODUCTION_ENABLED` = `true`.
+- [ ] **Recommended:** Settings → Environments → **production** → *Required reviewers* (yourself). GitHub then asks for a click before anything touches the live site.
+
+## 4. Deploy the code
+
+- [ ] **Actions → deploy-production → Run workflow.** It checks `.env`, uploads the app, creates `APP_KEY`, sets up the database, **installs the every-minute cron job**, and checks `/up` and `/login`.
+
+Live deploys never happen on an ordinary push: only from this button, or by pushing a version tag (`git tag v1.0.0 && git push origin v1.0.0`).
+
+## 5. Copy staging's data
+
+- [ ] **Actions → copy-staging-to-production → Run workflow** and type `COPY`. It:
+  1. Backs up staging and downloads the backup.
+  2. Backs up the live database (a safety copy in `storage/app/private/backups`), then loads staging's data into it. Clients, cleaners, logins, schedules, timesheets, invoices, SMS history and settings all come across.
+  3. Removes Xero from staging (staging can't create real invoices after this). Staging's data stays as it is.
+- [ ] Sign in at `https://apqcleaner.com.au/login` with your **staging** email and password. Everyone, cleaners included, keeps their login, but has to sign in once on the new address.
+
+Run it again any time before launch to refresh the live copy. After launch, **don't**: it would replace live data with staging's.
+
+## 6. Reconnect the integrations on the live site
+
+- [ ] **Xero** (Xero logins can't be copied between sites, because they're encrypted with each site's own key):
+  1. developer.xero.com → your app → **Redirect URIs** → add `https://apqcleaner.com.au/admin/xero/callback`. Keep the staging one.
+  2. Same app → **Webhooks** → change the delivery URL to `https://apqcleaner.com.au/webhooks/xero` (tick **Invoices** and **Contacts**). Put the webhook key in the live `.env` as `XERO_WEBHOOK_KEY`.
+  3. Live site → Admin → Xero → **Connect to Xero** → choose the real organisation → **Test connection**.
+- [ ] **Mobile Message:** Admin → SMS shows two webhook URLs for the live site. Paste them into Mobile Message (Settings → API/webhooks) in place of the staging ones. Then press **Check Mobile Message account**.
+- [ ] **Admin → Settings → System status:** after two minutes, *Scheduled tasks* and *Background jobs* should be green.
+
+## 7. Put staging into test mode
+
+On staging, edit `/home/STAGINGUSER/apqcleaner/.env`:
+
+```dotenv
+SMS_TEST_RECIPIENT=+614XXXXXXXX   # your own mobile: every staging text goes there
 ```
 
-## 4. First deploy and setup
+Then run `artisan optimize:clear && artisan optimize` (see DEPLOY-STAGING → Troubleshooting), or just re-run deploy-staging.
 
-- [ ] Run **deploy-production**. It checks `.env`, uploads, generates `APP_KEY`, migrates and checks `/up` and `/login`.
-- [ ] Create the owner's admin login (it prints a temporary password):
+Even without this, staging no longer texts real clients: with no test number it records the message as "not sent". To try invoicing on staging, connect it to Xero's **Demo Company**, never the real organisation.
 
-```bash
-cd ~/apqcleaner && /usr/local/bin/ea-php84 artisan db:seed --force
-```
+## 8. Go-live checks
 
-- [ ] **Cron job:** every minute (this drives visits, reminders, invoices and backups):
-
-```
-* * * * * cd /home/CPANELUSER/apqcleaner && /usr/local/bin/ea-php84 artisan schedule:run >> /dev/null 2>&1
-```
-
-- [ ] **Admin → Settings → System status:** after a couple of minutes, "Scheduled tasks" and "Background jobs" should both be green.
-- [ ] **Data:** import the staff (planner) and clients (Clients → Import from spreadsheet), or copy the trial data across from staging. To copy it, download a staging backup from Settings → Backups, then restore it:
-
-```bash
-gunzip -c apq-db-XXXX.sql.gz | mysql -u USER -p LIVE_DB
-```
-
-## 5. Integrations
-
-- [ ] **Xero:**
-  - At developer.xero.com, add `https://LIVE-DOMAIN/admin/xero/callback` to the app's **Redirect URIs** (keep the staging one).
-  - In APQ, go to Settings → Xero → **Connect to Xero** and choose the **real organisation**.
-  - **Test connection:** account codes 200 and 260 should be found.
-  - Webhook (optional): `https://LIVE-DOMAIN/webhooks/xero` with its key in `XERO_WEBHOOK_KEY`.
-- [ ] **Mobile Message:**
-  - Settings → SMS → **Check Mobile Message account** should show the balance and an approved sender.
-  - Set the two webhook URLs shown on that page in Mobile Message.
-  - Add the **business phone** for the templates.
-  - Send one reminder to your own mobile.
-
-## 6. Go-live checks
-
-- [ ] `https://LIVE-DOMAIN/login` loads over HTTPS (the padlock shows), in English, and the EN/ES switch works.
-- [ ] A cleaner can sign in on a phone and see today's jobs. START → STOP → SUBMIT works on a test visit, which you then delete.
-- [ ] An admin can approve that timesheet, and a one-client invoice run creates a **Draft** in the real Xero. Delete it in Xero afterwards.
+- [ ] `https://apqcleaner.com.au/login` loads with the padlock, in English, and the EN/ES switch works.
+- [ ] A cleaner signs in on a phone and sees today's jobs. START → STOP → SUBMIT works on a test visit (delete it afterwards).
+- [ ] Approve that timesheet, then create a one-client invoice as a **Draft** in Xero (delete it in Xero afterwards). Its status should change from *Sending…* within a minute.
 - [ ] **Settings → Backups → Back up now** works. Download the file and keep it somewhere private.
-- [ ] System status shows debug mode **Off**, and SMS shows "Sending for real" (or test mode, if not yet ready).
+- [ ] System status shows debug mode **Off**, and SMS shows "Sending for real".
+- [ ] Tell the cleaners the new address, and have them re-add it to their phone's home screen.
 
-## 7. After launch
+## After launch
 
 - **Weekly:** download a backup from Settings → Backups (an off-server copy), and glance at System status.
 - **Fortnightly:** approve timesheets, then Reports → *Staff hours & pay* → CSV for payroll.
-- **Monthly:** Invoices → *Create invoices* for the previous month, and Reports → *Margin by client* to spot under-priced clients.
-- **Changes:** try them on staging first. Deploy to production when happy, then check **What's new** for the release notes.
+- **Monthly:** Invoices → *Create invoices*.
+- **Changes:** try them on staging first (deploys automatically on every push), then run **deploy-production** when happy.

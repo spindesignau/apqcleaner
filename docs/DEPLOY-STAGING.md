@@ -173,13 +173,13 @@ cd ~/apqcleaner && /usr/local/bin/ea-php84 artisan db:seed --class=DemoSeeder --
 
 ### 9. Cron (scheduler and queue)
 
-In **cPanel → Cron Jobs**, add one job that runs **every minute**:
+**Every deploy now installs this automatically** (step "Scheduler cron job"). It also removes a hand-added copy, so the job never runs twice. Only if the deploy log warns that `crontab` isn't available, add it yourself in **cPanel → Cron Jobs**, running **every minute**:
 
 ```
 * * * * * cd /home/CPANELUSER/apqcleaner && /usr/local/bin/ea-php84 artisan schedule:run >> /dev/null 2>&1
 ```
 
-This creates upcoming visits nightly, stops forgotten timers, and runs queued jobs.
+This creates upcoming visits nightly, stops forgotten timers, and runs queued jobs: invoices to Xero, SMS reminders and backups. Without it, invoices stay on "Sending…".
 
 ---
 

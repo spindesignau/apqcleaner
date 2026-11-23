@@ -44,6 +44,7 @@ return [
     'reminder_failed' => 'Falló el SMS: :reason',
     'skip_opted_out' => 'el cliente se dio de baja de los SMS',
     'skip_no_mobile' => 'no tiene un móvil válido',
+    'skip_staging' => 'sitio de pruebas: define SMS_TEST_RECIPIENT para recibir mensajes de prueba',
     'redirected' => 'Modo de prueba: enviado al teléfono de prueba en lugar de :to',
     'simulated' => 'Modo de prueba — no se envió de verdad',
     'unreachable' => 'No se pudo conectar con Mobile Message',

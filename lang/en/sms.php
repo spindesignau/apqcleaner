@@ -44,6 +44,7 @@ return [
     'reminder_failed' => 'SMS failed: :reason',
     'skip_opted_out' => 'client has opted out of SMS',
     'skip_no_mobile' => 'no valid mobile number',
+    'skip_staging' => 'staging site: set SMS_TEST_RECIPIENT to receive test messages',
     'redirected' => 'Test mode: sent to the test phone instead of :to',
     'simulated' => 'Test mode — not actually sent',
     'unreachable' => 'Could not reach Mobile Message',

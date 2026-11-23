@@ -131,6 +131,10 @@ class SmsDispatcher
     private function send(string $to, string $body, string $ref, array $meta): SmsMessage
     {
         $redirect = ! app()->isProduction() ? config('mobilemessage.test_recipient') : null;
+        if (! $redirect && app()->environment('staging')) {
+            // Staging holds a copy of real client data: never text real people from it.
+            return $this->record($to, $body, $ref, $meta + ['status' => 'skipped', 'status_detail' => __('sms.skip_staging')]);
+        }
         $message = $this->record($redirect ?: $to, $body, $ref, $meta + ['status' => 'queued',
             'status_detail' => $redirect ? __('sms.redirected', ['to' => $to]) : null]);
         if ($message->wasRecentlyCreated === false) {
