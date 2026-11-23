@@ -1,0 +1,76 @@
+name: publish-release
+
+# Live site (apqcleaner.com.au) — PULL deploy. The host's firewall blocks SSH from GitHub, so instead of pushing,
+# this workflow tests and builds the app and publishes it as a GitHub Release. The server checks for a new release
+# every 5 minutes (.github/scripts/pull-deploy.sh, run by cron) and installs it itself. See docs/LAUNCH.md.
+#
+# Start it from Actions → publish-release → Run workflow, or by pushing a version tag (git tag v1.0.0 && git push origin v1.0.0).
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: 'What changed (optional, shown on the release)'
+        required: false
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, bcmath, gd, exif, zip, pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Test
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci && npm run build
+          cp .env.example .env && php artisan key:generate
+          ./vendor/bin/pint --test
+          php artisan apq:lang:check
+          php artisan test
+          rm .env
+
+      - name: Build for production
+        run: |
+          composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
+          npm run build
+
+      - name: Package
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          rsync -a --exclude-from=.github/deploy-exclude.txt ./ "$RUNNER_TEMP/release/"
+          mkdir -p "$RUNNER_TEMP/release/deploy"
+          cp .github/scripts/install-release.sh .github/scripts/link-public-html.sh .github/scripts/ensure-cron.sh .github/scripts/pull-deploy.sh "$RUNNER_TEMP/release/deploy/"
+          echo "${GITHUB_SHA}" > "$RUNNER_TEMP/release/deploy/REVISION"
+          tar -C "$RUNNER_TEMP/release" -czf apq-release.tar.gz .
+          sha256sum apq-release.tar.gz > apq-release.tar.gz.sha256
+          du -h apq-release.tar.gz
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ github.event.inputs.notes }}
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then TAG="${GITHUB_REF_NAME}"; else TAG="live-$(date -u +%Y%m%d-%H%M)-${GITHUB_RUN_NUMBER}"; fi
+          gh release create "$TAG" apq-release.tar.gz apq-release.tar.gz.sha256 \
+            --target "$GITHUB_SHA" --latest --title "$TAG" \
+            --notes "${NOTES:-Release of ${GITHUB_SHA::7}.} The live server installs it within 5 minutes."
+          echo "### Published $TAG — apqcleaner.com.au will install it within 5 minutes" >> "$GITHUB_STEP_SUMMARY"

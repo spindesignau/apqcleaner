@@ -5,6 +5,7 @@ return [
     'xero_card' => 'Conexión, códigos de cuenta, plazo de pago y valores por defecto de las facturas.',
     'sms_card' => 'Horario de recordatorios, plantillas de mensajes y la cuenta de Mobile Message.',
     'checks' => [
+        'deploy' => 'Última versión',
         'scheduler' => 'Tareas programadas (cron)',
         'queue' => 'Trabajos en segundo plano',
         'failed_jobs' => 'Trabajos fallidos',
@@ -33,4 +34,6 @@ return [
     'backup_done' => 'Copia creada (:size KB).',
     'download' => 'Descargar',
     'backup_privacy' => 'Las copias contienen datos de clientes y personal. Guarda las descargas en un lugar privado y descarga una con regularidad para tener una copia fuera del servidor.',
+    'deploy_ok' => 'Versión :release instalada :when',
+    'deploy_failed' => 'Una versión falló :when. :message',
 ];

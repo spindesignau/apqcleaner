@@ -1,12 +1,10 @@
 name: deploy-production
 
-# Production deploy — same steps as staging, separate PRODUCTION_* secrets.
-# Runs only when started by hand (Actions → deploy-production → Run workflow) or when a release tag (v*) is pushed.
-# Nothing deploys until the repository variable PRODUCTION_ENABLED is "true". See docs/LAUNCH.md.
+# SSH (push) deploy for a live server that accepts SSH from GitHub — same steps as staging, PRODUCTION_* secrets.
+# NOT used for apqcleaner.com.au: that host blocks SSH, so it uses publish-release.yml (pull deploy) instead.
+# Runs only by hand, and only when the repository variable PRODUCTION_ENABLED is "true".
 
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
 
 concurrency:

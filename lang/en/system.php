@@ -5,6 +5,7 @@ return [
     'xero_card' => 'Connection, account codes, payment terms and invoice defaults.',
     'sms_card' => 'Reminder times, message templates and the Mobile Message account.',
     'checks' => [
+        'deploy' => 'Latest release',
         'scheduler' => 'Scheduled tasks (cron)',
         'queue' => 'Background jobs',
         'failed_jobs' => 'Failed background jobs',
@@ -33,4 +34,6 @@ return [
     'backup_done' => 'Backup created (:size KB).',
     'download' => 'Download',
     'backup_privacy' => 'Backups contain client and staff details. Keep downloaded copies somewhere private, and download one regularly so a copy exists off the server.',
+    'deploy_ok' => 'Release :release installed :when',
+    'deploy_failed' => 'A release failed :when. :message',
 ];

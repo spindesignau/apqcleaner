@@ -1,32 +1,44 @@
 # Moving to the live site: apqcleaner.com.au
 
-Staging (apqcleaner.spinstaging.com) keeps running as the place to try changes. The live site gets its own cPanel account, database, `.env` and GitHub secrets, plus a copy of staging's data.
+The live site is on a different host from staging: Synergy Wholesale shared hosting, server `syn02ee.syd7.hostyourservices.net`, IP `110.232.143.245`, cPanel user **`apqclean`**. Its firewall blocks SSH from outside, so GitHub can't push to it. It uses a **pull deploy** instead:
 
-Order matters: **set up the server → deploy the code → copy the data → reconnect Xero and Mobile Message → switch staging to test mode.**
+1. **GitHub → Actions → publish-release → Run workflow** tests and builds the app, and publishes it as a release.
+2. Every 5 minutes, a cron job on the server checks for a new release. When it finds one, it backs up the database, installs the release, migrates, and checks the site answers. If the site returns an error, the previous version is put back automatically.
+3. **Admin → Settings → System status** shows which release is live, or why the last one failed. The full log is `~/apqcleaner/storage/logs/deploy.log`.
 
-## 1. Create the cPanel account (WHM)
+Staging (apqcleaner.spinstaging.com) keeps deploying automatically on every push. Try changes there first.
 
-- [ ] **WHM → Create a New Account:** domain `apqcleaner.com.au`. Note the **username** (written `CPANELUSER` below).
-- [ ] **DNS:** at the domain registrar, point `apqcleaner.com.au` at this server. Use the server's nameservers, or an A record for `@` and `www` → `43.250.141.96` if it's the same server as staging. Wait until the domain loads the cPanel placeholder page.
-- [ ] **Document root:** leave it as `/public_html`. cPanel doesn't allow changing it for the main domain, so the first live deploy turns `~/public_html` into a link to the app's `public` folder. The old folder is kept as `public_html.before-apq-…`. Leave `public_html` empty (cPanel's own `cgi-bin` and `.htaccess` are fine).
-- [ ] **cPanel → SSL/TLS Status → Run AutoSSL**, so the padlock shows on `https://apqcleaner.com.au`.
-- [ ] **MultiPHP Manager:** PHP **8.4** for the domain (do this *before* the first deploy, so the setting is carried over). Same extensions as staging (DEPLOY-STAGING step 2).
-- [ ] **MySQL Databases:** create a new database and user (not staging's), and give the user **All privileges** on it.
-- [ ] **SSH Access → Manage SSH Keys:** generate a key (a passphrase is fine), **Authorize** it, and copy the **private key**.
-- [ ] **Email Accounts:** create e.g. `hello@apqcleaner.com.au`, so password-reset emails come from the business domain.
+## 1. cPanel (account `apqclean`)
 
-## 2. The live `.env`
+- [ ] **Select PHP Version:** **8.4**. Tick the extensions `mbstring`, `intl`, `bcmath`, `gd`, `exif`, `zip`, `pdo_mysql`, `fileinfo`.
+- [ ] **Document root:** leave it as `/public_html`, and leave that folder empty (cPanel's own `cgi-bin` and `.htaccess` are fine). The first install turns `~/public_html` into a link to the app's `public` folder. The old folder is kept as `public_html.before-apq-…`.
+- [ ] **MySQL Databases:** create a database and a user, and give the user **All privileges** on the database. Names look like `apqclean_app`.
+- [ ] **Email Accounts:** create `hello@apqcleaner.com.au` (password-reset emails come from it).
+- [ ] **DNS:** at the registrar, `apqcleaner.com.au` and `www` → **110.232.143.245** (A records), or use the host's nameservers. Once it resolves, the SSL certificate (already "Active") covers it.
 
-In **File Manager**, create the folder `/home/CPANELUSER/apqcleaner` and a file `.env` inside it. Copy staging's `.env`, then change these lines:
+## 2. A read-only GitHub token for the server
+
+GitHub → your avatar → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**:
+
+- **Name:** `apqcleaner.com.au deploy`
+- **Expiration:** 1 year (put a reminder in your calendar to renew it)
+- **Repository access:** *Only select repositories* → `spindesignau/apqcleaner`
+- **Permissions → Repository → Contents:** **Read-only** (nothing else)
+
+Copy the token (it starts with `github_pat_`). It goes **only** into the server's `.env` in the next step. Never paste it into chat or commit it.
+
+## 3. The live `.env`
+
+**File Manager** → create the folder `/home/apqclean/apqcleaner`. Inside it, create a file called `.env`, then copy staging's `.env` into it and change these lines:
 
 ```dotenv
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://apqcleaner.com.au
-APP_KEY=                       # leave empty: the first deploy creates it
+APP_KEY=                        # leave empty: the first install creates it
 
-DB_DATABASE=CPANELUSER_apq     # the new database
-DB_USERNAME=CPANELUSER_apq
+DB_DATABASE=apqclean_app
+DB_USERNAME=apqclean_app
 DB_PASSWORD="..."
 
 SESSION_SECURE_COOKIE=true
@@ -39,80 +51,72 @@ MAIL_PASSWORD="..."
 MAIL_FROM_ADDRESS=hello@apqcleaner.com.au
 
 SMS_ENABLED=true
-SMS_TEST_RECIPIENT=            # must be EMPTY on the live site
-MOBILEMESSAGE_WEBHOOK_TOKEN=   # a NEW long random string (not staging's)
+SMS_TEST_RECIPIENT=             # must be EMPTY on the live site
+MOBILEMESSAGE_WEBHOOK_TOKEN=    # a NEW long random string (not staging's)
+
+# Pull deploy
+GITHUB_DEPLOY_REPO=spindesignau/apqcleaner
+GITHUB_DEPLOY_TOKEN="github_pat_..."
+APQ_PHP_BIN=/usr/local/bin/php
 ```
 
 Keep the Mobile Message username/password/sender and the Xero client ID/secret the same as staging. Put any value containing spaces, `#` or `$` in "double quotes".
 
-## 3. GitHub settings
+## 4. First release and install
 
-In the repository: **Settings → Secrets and variables → Actions**.
+- [ ] **GitHub → Actions → publish-release → Run workflow.** It takes about 3 minutes and ends with "Published live-…".
+- [ ] **cPanel → Terminal**, paste this once. It downloads the deploy script using the token from `.env`, then runs it:
 
-- [ ] **Secrets:**
+```bash
+cd ~/apqcleaner && mkdir -p .deploy && T=$(grep -E '^GITHUB_DEPLOY_TOKEN=' .env | cut -d= -f2- | tr -d '" ') && curl -fsSL -H "Authorization: Bearer $T" -H "Accept: application/vnd.github.raw" https://api.github.com/repos/spindesignau/apqcleaner/contents/.github/scripts/pull-deploy.sh -o .deploy/pull-deploy.sh && bash .deploy/pull-deploy.sh
+```
 
-| Secret | Value |
-| --- | --- |
-| `PRODUCTION_SSH_HOST` | `43.250.141.96` (or the new server's address) |
-| `PRODUCTION_SSH_PORT` | `2222` |
-| `PRODUCTION_SSH_USER` | `CPANELUSER` |
-| `PRODUCTION_SSH_KEY` | the private key from step 1 |
-| `PRODUCTION_SSH_PASSPHRASE` | its passphrase (if it has one) |
-| `PRODUCTION_SSH_KNOWN_HOSTS` | the same value as `STAGING_SSH_KNOWN_HOSTS` if it's the same server; otherwise the output of `ssh-keyscan -p 2222 <server>` |
-| `PRODUCTION_APP_PATH` | `/home/CPANELUSER/apqcleaner` |
+It ends with **"Release live-… installed."** It has also set up two cron jobs: the deploy check (every 5 minutes) and the app's scheduler (every minute). You can see both under cPanel → Cron Jobs.
 
-- [ ] **Variables:** `PRODUCTION_URL` = `https://apqcleaner.com.au`, `PRODUCTION_PHP_BIN` = `/usr/local/bin/ea-php84`, `PRODUCTION_ENABLED` = `true`.
-- [ ] **Recommended:** Settings → Environments → **production** → *Required reviewers* (yourself). GitHub then asks for a click before anything touches the live site.
-
-## 4. Deploy the code
-
-- [ ] **Actions → deploy-production → Run workflow.** It checks `.env`, uploads the app, points `public_html` at it, creates `APP_KEY`, sets up the database, **installs the every-minute cron job**, and checks `/up` and `/login`.
-
-Live deploys never happen on an ordinary push: only from this button, or by pushing a version tag (`git tag v1.0.0 && git push origin v1.0.0`).
+From now on, releasing is only **Actions → publish-release → Run workflow** (or pushing a version tag). The live site picks it up within 5 minutes.
 
 ## 5. Copy staging's data
 
-- [ ] **Actions → copy-staging-to-production → Run workflow** and type `COPY`. It:
-  1. Backs up staging and downloads the backup.
-  2. Backs up the live database (a safety copy in `storage/app/private/backups`), then loads staging's data into it. Clients, cleaners, logins, schedules, timesheets, invoices, SMS history and settings all come across.
-  3. Removes Xero from staging (staging can't create real invoices after this). Staging's data stays as it is.
-- [ ] Sign in at `https://apqcleaner.com.au/login` with your **staging** email and password. Everyone, cleaners included, keeps their login, but has to sign in once on the new address.
+1. **Staging** → Admin → Settings → **Back up now**, then **download** the newest backup (`apq-db-….sql.gz`).
+2. **Staging** → Admin → Xero → **Disconnect**. Staging must not be connected to the real organisation once the live site is.
+3. **Live cPanel → File Manager** → upload the file into `/home/apqclean/apqcleaner/storage/app/private/`.
+4. **Live cPanel → Terminal** (put in the real file name):
 
-Run it again any time before launch to refresh the live copy. After launch, **don't**: it would replace live data with staging's.
-
-## 6. Reconnect the integrations on the live site
-
-- [ ] **Xero** (Xero logins can't be copied between sites, because they're encrypted with each site's own key):
-  1. developer.xero.com → your app → **Redirect URIs** → add `https://apqcleaner.com.au/admin/xero/callback`. Keep the staging one.
-  2. Same app → **Webhooks** → change the delivery URL to `https://apqcleaner.com.au/webhooks/xero` (tick **Invoices** and **Contacts**). Put the webhook key in the live `.env` as `XERO_WEBHOOK_KEY`.
-  3. Live site → Admin → Xero → **Connect to Xero** → choose the real organisation → **Test connection**.
-- [ ] **Mobile Message:** Admin → SMS shows two webhook URLs for the live site. Paste them into Mobile Message (Settings → API/webhooks) in place of the staging ones. Then press **Check Mobile Message account**.
-- [ ] **Admin → Settings → System status:** after two minutes, *Scheduled tasks* and *Background jobs* should be green.
-
-## 7. Put staging into test mode
-
-On staging, edit `/home/STAGINGUSER/apqcleaner/.env`:
-
-```dotenv
-SMS_TEST_RECIPIENT=+614XXXXXXXX   # your own mobile: every staging text goes there
+```bash
+cd ~/apqcleaner && php artisan apq:backup && php artisan apq:restore storage/app/private/apq-db-XXXX.sql.gz --force && php artisan optimize:clear && php artisan optimize && rm storage/app/private/apq-db-XXXX.sql.gz
 ```
 
-Then run `artisan optimize:clear && artisan optimize` (see DEPLOY-STAGING → Troubleshooting), or just re-run deploy-staging.
+5. Sign in at `https://apqcleaner.com.au/login` with your **staging** email and password. Everyone, cleaners included, keeps their login, but signs in once on the new address.
 
-Even without this, staging no longer texts real clients: with no test number it records the message as "not sent". To try invoicing on staging, connect it to Xero's **Demo Company**, never the real organisation.
+You can repeat this before launch to refresh the live copy. After launch, **don't**: it replaces live data.
+
+## 6. Connect the integrations on the live site
+
+- [ ] **Xero:**
+  1. developer.xero.com → your app → **Redirect URIs** → add `https://apqcleaner.com.au/admin/xero/callback`. Keep the staging one.
+  2. **Webhooks** → change the delivery URL to `https://apqcleaner.com.au/webhooks/xero` (tick **Invoices** and **Contacts**). Put the webhook key in the live `.env` as `XERO_WEBHOOK_KEY`, then run `php artisan optimize` in Terminal.
+  3. Live site → Admin → Xero → **Connect to Xero** → the real organisation → **Test connection**.
+- [ ] **Mobile Message:** Admin → SMS shows the live webhook URLs. Paste them into Mobile Message in place of staging's, then press **Check Mobile Message account**.
+- [ ] **Admin → Settings → System status:** after two minutes, *Scheduled tasks*, *Background jobs* and *Latest release* should all be green.
+
+## 7. Staging into test mode
+
+In staging's `.env`, set `SMS_TEST_RECIPIENT=+614XXXXXXXX` (your own mobile), then re-run deploy-staging. Without it, staging records texts as "not sent", so it can't text real clients either way. To try invoicing on staging, connect it to Xero's **Demo Company**, never the real organisation.
 
 ## 8. Go-live checks
 
 - [ ] `https://apqcleaner.com.au/login` loads with the padlock, in English, and the EN/ES switch works.
 - [ ] A cleaner signs in on a phone and sees today's jobs. START → STOP → SUBMIT works on a test visit (delete it afterwards).
-- [ ] Approve that timesheet, then create a one-client invoice as a **Draft** in Xero (delete it in Xero afterwards). Its status should change from *Sending…* within a minute.
+- [ ] Approve that timesheet, then create a one-client invoice as a **Draft** in Xero (delete it in Xero afterwards). *Sending…* should clear within a minute.
 - [ ] **Settings → Backups → Back up now** works. Download the file and keep it somewhere private.
-- [ ] System status shows debug mode **Off**, and SMS shows "Sending for real".
 - [ ] Tell the cleaners the new address, and have them re-add it to their phone's home screen.
 
-## After launch
+## Troubleshooting
 
-- **Weekly:** download a backup from Settings → Backups (an off-server copy), and glance at System status.
-- **Fortnightly:** approve timesheets, then Reports → *Staff hours & pay* → CSV for payroll.
-- **Monthly:** Invoices → *Create invoices*.
-- **Changes:** try them on staging first (deploys automatically on every push), then run **deploy-production** when happy.
+| Problem | Fix |
+| --- | --- |
+| A release didn't arrive | Admin → Settings → *Latest release* shows why. Details are in `~/apqcleaner/storage/logs/deploy.log`. "Could not reach GitHub" means the token expired or is wrong: make a new one (step 2) and update `.env`. |
+| Install a release now instead of waiting | Terminal: `bash ~/apqcleaner/.deploy/pull-deploy.sh` |
+| Reinstall the current release | Terminal: `bash ~/apqcleaner/.deploy/pull-deploy.sh --force` |
+| A release failed and was rolled back | The live site keeps running the previous version. Fix the problem on staging, then publish a new release. The failed one isn't retried. |
+| Changed `.env` | Terminal: `cd ~/apqcleaner && php artisan optimize:clear && php artisan optimize` |

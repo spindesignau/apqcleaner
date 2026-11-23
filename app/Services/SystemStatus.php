@@ -38,9 +38,25 @@ class SystemStatus
                 'detail' => config('mobilemessage.enabled') ? __('system.sms_live') : __('system.sms_test')],
             ['key' => 'debug', 'ok' => ! (app()->environment('production') && config('app.debug')),
                 'detail' => config('app.debug') ? __('system.debug_on') : __('system.debug_off')],
+            ...$this->deployCheck(),
             ['key' => 'environment', 'ok' => null,
                 'detail' => app()->environment().' · PHP '.PHP_VERSION.' · '.DB::connection()->getDriverName().' · v'.(app(Changelog::class)->version() ?? '?')],
         ];
+    }
+
+    /** Pull-deploy result (live site only: written by deploy/pull-deploy.sh). */
+    private function deployCheck(): array
+    {
+        $file = storage_path('app/deploy-status.json');
+        $status = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
+        if (! is_array($status)) {
+            return [];
+        }
+        $when = isset($status['at']) ? Carbon::parse($status['at'])->diffForHumans() : '?';
+
+        return [['key' => 'deploy', 'ok' => ($status['state'] ?? '') !== 'failed', 'detail' => ($status['state'] ?? '') === 'failed'
+            ? __('system.deploy_failed', ['message' => $status['message'] ?? '', 'when' => $when])
+            : __('system.deploy_ok', ['release' => $status['release'] ?? '?', 'when' => $when])]];
     }
 
     /** Problems serious enough for a dashboard banner. */
