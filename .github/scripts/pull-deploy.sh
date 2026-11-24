@@ -40,7 +40,8 @@ REPO=$(env_value GITHUB_DEPLOY_REPO)
 TOKEN=$(env_value GITHUB_DEPLOY_TOKEN)
 PHP=$(env_value APQ_PHP_BIN); PHP="${PHP:-/usr/local/bin/php}"
 APP_URL=$(env_value APP_URL)
-[ -n "$REPO" ] && [ -n "$TOKEN" ] || { log "ERROR: set GITHUB_DEPLOY_REPO and GITHUB_DEPLOY_TOKEN in .env"; exit 1; }
+[ -n "$REPO" ] || { log "ERROR: GITHUB_DEPLOY_REPO is missing from $APP_PATH/.env (add: GITHUB_DEPLOY_REPO=spindesignau/apqcleaner)"; exit 1; }
+[ -n "$TOKEN" ] || { log "ERROR: GITHUB_DEPLOY_TOKEN is missing from $APP_PATH/.env"; exit 1; }
 GITHUB_API="${GITHUB_API:-https://api.github.com}"   # overridable for testing
 api() { curl -fsS --max-time 120 -H "Authorization: Bearer $TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" "$@"; }
 
