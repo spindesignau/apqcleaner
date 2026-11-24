@@ -57,12 +57,19 @@ if ! json=$(api -H "Accept: application/vnd.github+json" "$GITHUB_API/repos/$REP
   status failed "$(cat .deploy/current-release 2>/dev/null)" "Could not reach GitHub (check GITHUB_DEPLOY_TOKEN)"
   exit 1
 fi
-read -r TAG ASSET_ID SUM_ID < <(printf '%s' "$json" | "$PHP" -r '
-  $r = json_decode(stream_get_contents(STDIN), true) ?: [];
-  $ids = [];
-  foreach ($r["assets"] ?? [] as $a) { $ids[$a["name"]] = $a["id"]; }
-  echo ($r["tag_name"] ?? "-"), " ", ($ids[$argv[1]] ?? "-"), " ", ($ids[$argv[1].".sha256"] ?? "-"), "\n";
-' "$ASSET")
+# Parse with a small PHP file (no process substitution: CloudLinux has no /dev/fd, and cPanel's php wrapper
+# can't take multi-line -r code).
+cat > .deploy/helper.php <<'PHPCODE'
+<?php
+if (($argv[1] ?? '') === 'sha256') { echo hash_file('sha256', $argv[2]); exit; }
+$r = json_decode((string) file_get_contents($argv[2]), true) ?: [];
+$ids = [];
+foreach ($r['assets'] ?? [] as $a) { $ids[$a['name']] = $a['id']; }
+echo ($r['tag_name'] ?? '-'), ' ', ($ids[$argv[3]] ?? '-'), ' ', ($ids[$argv[3].'.sha256'] ?? '-');
+PHPCODE
+printf '%s' "$json" > .deploy/latest.json
+set -- $("$PHP" .deploy/helper.php release .deploy/latest.json "$ASSET" 2>/dev/null)
+TAG="${1:--}"; ASSET_ID="${2:--}"; SUM_ID="${3:--}"
 CURRENT=$(cat .deploy/current-release 2>/dev/null || true)
 if [ "$TAG" = "-" ] || [ "$ASSET_ID" = "-" ]; then log "Latest release has no $ASSET yet."; exit 0; fi
 if [ "$TAG" = "$CURRENT" ] && [ "$FORCE" != "--force" ]; then exit 0; fi   # nothing new: stay quiet
@@ -76,7 +83,8 @@ api -L -H "Accept: application/octet-stream" -o .deploy/release.tar.gz "$GITHUB_
   || { log "ERROR: download failed"; status failed "$CURRENT" "Download of $TAG failed"; exit 1; }
 if [ "$SUM_ID" != "-" ]; then
   expected=$(api -L -H "Accept: application/octet-stream" "$GITHUB_API/repos/$REPO/releases/assets/$SUM_ID" | awk '{print $1}')
-  actual=$("$PHP" -r 'echo hash_file("sha256", $argv[1]);' .deploy/release.tar.gz)
+  actual=$(sha256sum .deploy/release.tar.gz 2>/dev/null | awk '{print $1}')
+  [ -n "$actual" ] || actual=$("$PHP" .deploy/helper.php sha256 .deploy/release.tar.gz)
   [ -n "$expected" ] && [ "$expected" = "$actual" ] \
     || { log "ERROR: checksum mismatch — not installing"; rm -f .deploy/release.tar.gz; status failed "$CURRENT" "Checksum mismatch for $TAG"; exit 1; }
 fi
