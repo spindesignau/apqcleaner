@@ -64,7 +64,7 @@ class RestoreDatabase extends Command
                 }
                 $buffer .= $line;
                 if (str_ends_with($trimmed, ';')) {
-                    $pdo->exec($buffer);
+                    $pdo->exec($this->withDynamicRows($buffer));
                     $buffer = '';
                     $count++;
                 }
@@ -79,6 +79,19 @@ class RestoreDatabase extends Command
         }
 
         return $count;
+    }
+
+    /**
+     * Tables from another server may not name a row format; on hosts whose default is COMPACT they then fail
+     * ("Row size too large" / 767-byte keys). Create them as DYNAMIC, like this app's migrations do.
+     */
+    private function withDynamicRows(string $sql): string
+    {
+        if (! preg_match('/^\s*CREATE TABLE/i', $sql) || stripos($sql, 'ROW_FORMAT') !== false) {
+            return $sql;
+        }
+
+        return preg_replace('/;\s*$/', ' ROW_FORMAT=DYNAMIC;', rtrim($sql));
     }
 
     private function clearSiteSpecificData(): void

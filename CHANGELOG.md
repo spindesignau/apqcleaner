@@ -9,6 +9,7 @@ Changes are listed newest first. This page is visible to administrators only.
 - **The main domain works without root access:** the app is linked into `public_html`, and cPanel's PHP setting is kept.
 - **The every-minute scheduled task is now set up automatically**, so invoices don't get stuck on "Sending…" and reminders and backups run without extra cPanel setup.
 - **Moving data:** a staging backup can be loaded into the live site with one command (`apq:restore`).
+- **Works with older database settings on shared hosting:** tables now use the modern row format and shorter index keys, so the database is set up correctly on hosts that would otherwise reject it ("Specified key was too long").
 - **Staging can no longer text real clients.** Without a test phone number set, it records messages as "not sent".
 
 ## [0.8.0] – 18 November 2026

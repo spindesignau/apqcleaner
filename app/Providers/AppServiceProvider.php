@@ -8,6 +8,7 @@ use App\Services\Sms\MobileMessageGateway;
 use App\Services\Sms\SmsGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -25,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Some shared hosts' MySQL/MariaDB limit indexed columns to 767 bytes (191 utf8mb4 characters).
+        Schema::defaultStringLength(191);
+
         Password::defaults(fn () => Password::min(10)->letters()->numbers());
 
         // Xero allows 60 calls/minute per organisation; stay under it.
