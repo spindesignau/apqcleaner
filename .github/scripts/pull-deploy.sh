@@ -21,7 +21,7 @@ LOG="storage/logs/deploy.log"
 ASSET="apq-release.tar.gz"
 
 log() { printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" | tee -a "$LOG"; }
-env_value() { grep -E "^$1=" .env 2>/dev/null | tail -1 | cut -d= -f2- | sed -E 's/^[[:space:]]*"?//; s/"?[[:space:]]*$//'; }
+env_value() { grep -E "^$1=" .env 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '\r' | sed -E 's/^[[:space:]]*"?//; s/"?[[:space:]]*$//'; }
 status() {   # status <ok|failed|installing> <release> <message>
   printf '{"state":"%s","release":"%s","message":"%s","at":"%s"}\n' "$1" "$2" "$(printf '%s' "$3" | tr '"\n' "' ")" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > storage/app/deploy-status.json
 }

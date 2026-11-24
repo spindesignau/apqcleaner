@@ -68,7 +68,7 @@ Keep the Mobile Message username/password/sender and the Xero client ID/secret t
 - [ ] **cPanel → Terminal**, paste this once. It downloads the deploy script using the token from `.env`, then runs it:
 
 ```bash
-cd ~/apqcleaner && mkdir -p .deploy && T=$(grep -E '^GITHUB_DEPLOY_TOKEN=' .env | cut -d= -f2- | tr -d '" ') && curl -fsSL -H "Authorization: Bearer $T" -H "Accept: application/vnd.github.raw" https://api.github.com/repos/spindesignau/apqcleaner/contents/.github/scripts/pull-deploy.sh -o .deploy/pull-deploy.sh && bash .deploy/pull-deploy.sh
+cd ~/apqcleaner && mkdir -p .deploy && T=$(grep -E '^GITHUB_DEPLOY_TOKEN=' .env | cut -d= -f2- | tr -d '"\r ') && curl -fsSL -H "Authorization: Bearer $T" -H "Accept: application/vnd.github.raw" https://api.github.com/repos/spindesignau/apqcleaner/contents/.github/scripts/pull-deploy.sh -o .deploy/pull-deploy.sh && bash .deploy/pull-deploy.sh
 ```
 
 It ends with **"Release live-… installed."** It has also set up two cron jobs: the deploy check (every 5 minutes) and the app's scheduler (every minute). You can see both under cPanel → Cron Jobs.
