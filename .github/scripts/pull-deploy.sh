@@ -107,7 +107,7 @@ if [ -f artisan ]; then
 fi
 
 rollback() {
-  log "Rolling back to $CURRENT: $1"
+  log "FAILED: $1"; [ -n "$CURRENT" ] && log "Rolling back to $CURRENT"
   if [ -f .deploy/previous.tar.gz ]; then
     while IFS= read -r item; do [ -n "$item" ] && rm -rf -- "./$item"; done < .deploy/manifest
     tar -xzf .deploy/previous.tar.gz && "$PHP" artisan optimize:clear >/dev/null 2>&1; "$PHP" artisan optimize >/dev/null 2>&1
@@ -128,21 +128,21 @@ chmod +x .deploy/*.sh
 [ -f .deploy/install-release.sh ] || rollback "release has no deploy/install-release.sh"
 bash .deploy/install-release.sh "$APP_PATH" >> "$LOG" 2>&1 || rollback "install step failed"
 
-{
-  set -e
-  mkdir -p storage/app/private storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/import bootstrap/cache
-  chmod -R ug+rwX storage bootstrap/cache
-  if ! grep -qE '^APP_KEY=base64:.+' .env; then
-    grep -q '^APP_KEY=' .env || echo 'APP_KEY=' >> .env
-    "$PHP" artisan optimize:clear >/dev/null
-    "$PHP" artisan key:generate --force
-  fi
-  "$PHP" artisan migrate --force
-  "$PHP" artisan storage:link 2>/dev/null || true
-  "$PHP" artisan optimize:clear
-  "$PHP" artisan optimize
-  "$PHP" artisan queue:restart
-} >> "$LOG" 2>&1 || rollback "migrate/optimize failed (see $LOG)"
+# Each step must succeed; the first failure stops the install and is named in the log and on the status page.
+step() { log "→ artisan $*"; "$PHP" artisan "$@" >> "$LOG" 2>&1 || rollback "'artisan $1' failed — see storage/logs/deploy.log"; }
+mkdir -p storage/app/private storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/import bootstrap/cache
+chmod -R ug+rwX storage bootstrap/cache
+if ! grep -qE '^APP_KEY=base64:.+' .env; then
+  grep -q '^APP_KEY=' .env || echo 'APP_KEY=' >> .env
+  step config:clear          # not optimize:clear: on a new database the cache table doesn't exist yet
+  step key:generate --force
+fi
+step config:clear
+step migrate --force
+"$PHP" artisan storage:link >> "$LOG" 2>&1 || true
+step optimize:clear
+step optimize
+step queue:restart
 
 bash .deploy/link-public-html.sh "$APP_PATH" >> "$LOG" 2>&1 || log "WARNING: could not link public_html"
 bash .deploy/ensure-cron.sh "$APP_PATH" "$PHP" >> "$LOG" 2>&1 || log "WARNING: could not install the scheduler cron job"
