@@ -64,7 +64,7 @@ class RestoreDatabase extends Command
                 }
                 $buffer .= $line;
                 if (str_ends_with($trimmed, ';')) {
-                    $pdo->exec($this->withDynamicRows($buffer));
+                    $pdo->exec($this->compatible($buffer));
                     $buffer = '';
                     $count++;
                 }
@@ -82,16 +82,35 @@ class RestoreDatabase extends Command
     }
 
     /**
-     * Tables from another server may not name a row format; on hosts whose default is COMPACT they then fail
-     * ("Row size too large" / 767-byte keys). Create them as DYNAMIC, like this app's migrations do.
+     * Makes CREATE TABLE statements from another (possibly newer) server work on this one:
+     *  - no row format named → ROW_FORMAT=DYNAMIC (hosts defaulting to COMPACT reject wide rows / long keys);
+     *  - native `uuid` columns (MariaDB 10.7+) → char(36) when this server predates them.
      */
-    private function withDynamicRows(string $sql): string
+    public function compatible(string $sql, ?bool $supportsUuid = null): string
     {
-        if (! preg_match('/^\s*CREATE TABLE/i', $sql) || stripos($sql, 'ROW_FORMAT') !== false) {
+        if (! preg_match('/^\s*CREATE TABLE/i', $sql)) {
             return $sql;
         }
+        $supportsUuid ??= $this->serverSupportsUuid();
+        if (! $supportsUuid) {
+            $sql = preg_replace('/(`[^`]+`\s+)uuid\b/i', '$1char(36)', $sql);
+        }
+        if (stripos($sql, 'ROW_FORMAT') === false) {
+            $sql = preg_replace('/;\s*$/', ' ROW_FORMAT=DYNAMIC;', rtrim($sql));
+        }
 
-        return preg_replace('/;\s*$/', ' ROW_FORMAT=DYNAMIC;', rtrim($sql));
+        return $sql;
+    }
+
+    private function serverSupportsUuid(): bool
+    {
+        static $supported = null;
+        if ($supported === null) {
+            $version = (string) DB::connection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION);
+            $supported = stripos($version, 'mariadb') !== false && version_compare(preg_replace('/^(\d+\.\d+\.\d+).*/', '$1', $version), '10.7.0', '>=');
+        }
+
+        return $supported;
     }
 
     private function clearSiteSpecificData(): void

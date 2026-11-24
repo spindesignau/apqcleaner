@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Console\Commands\RestoreDatabase;
 use App\Models\Client;
 use App\Models\XeroConnection;
 use App\Services\Backup\DatabaseBackup;
@@ -44,5 +45,19 @@ class RestoreDatabaseTest extends TestCase
         $this->artisan('apq:xero:forget')->assertSuccessful();
 
         $this->assertSame(0, XeroConnection::count());
+    }
+
+    public function test_dumps_from_newer_servers_are_made_compatible(): void
+    {
+        $restore = new RestoreDatabase;
+        $sql = "CREATE TABLE `invoices` (\n  `id` bigint unsigned NOT NULL,\n  `idempotency_key` uuid NOT NULL,\n  `uuid` varchar(191) NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;\n";
+
+        $old = $restore->compatible($sql, supportsUuid: false);
+        $this->assertStringContainsString('`idempotency_key` char(36) NOT NULL', $old);
+        $this->assertStringContainsString('`uuid` varchar(191)', $old);   // a column NAMED uuid is untouched
+        $this->assertStringEndsWith('ROW_FORMAT=DYNAMIC;', $old);
+
+        $this->assertStringContainsString('`idempotency_key` uuid NOT NULL', $restore->compatible($sql, supportsUuid: true));
+        $this->assertSame("INSERT INTO `x` VALUES ('uuid');", $restore->compatible("INSERT INTO `x` VALUES ('uuid');", false));
     }
 }
