@@ -34,7 +34,7 @@ return [
     'failed_banner' => '{1} 1 invoice failed to reach Xero.|[2,*] :count invoices failed to reach Xero.',
     'reconnect_needed' => 'Xero needs to be reconnected (the connection expired or was removed).',
     'invalid_scope' => 'Xero rejected the requested permissions. Check XERO_SCOPES matches the scopes on your Xero app.',
-    'bad_credentials' => 'Xero rejected the app credentials. Check XERO_CLIENT_ID and XERO_CLIENT_SECRET.',
+    'bad_credentials' => 'Xero rejected the app credentials. Check XERO_CLIENT_ID and XERO_CLIENT_SECRET in .env, then run: php artisan optimize:clear && php artisan optimize (the server caches .env).',
     'token_failed' => 'Xero sign-in failed (:error).',
     'no_organisation' => 'No Xero organisation was authorised. Try connecting again and choose APQ\'s organisation.',
     'multiple_orgs' => 'Several organisations were authorised; using :name.',

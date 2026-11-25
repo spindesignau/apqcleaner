@@ -34,7 +34,7 @@ return [
     'failed_banner' => '{1} 1 factura no llegó a Xero.|[2,*] :count facturas no llegaron a Xero.',
     'reconnect_needed' => 'Hay que reconectar Xero (la conexión expiró o fue eliminada).',
     'invalid_scope' => 'Xero rechazó los permisos solicitados. Revisa que XERO_SCOPES coincida con los de tu app de Xero.',
-    'bad_credentials' => 'Xero rechazó las credenciales de la app. Revisa XERO_CLIENT_ID y XERO_CLIENT_SECRET.',
+    'bad_credentials' => 'Xero rechazó las credenciales de la app. Revisa XERO_CLIENT_ID y XERO_CLIENT_SECRET en .env y luego ejecuta: php artisan optimize:clear && php artisan optimize (el servidor guarda .env en caché).',
     'token_failed' => 'Falló el inicio de sesión en Xero (:error).',
     'no_organisation' => 'No se autorizó ninguna organización de Xero. Conecta de nuevo y elige la organización de APQ.',
     'multiple_orgs' => 'Se autorizaron varias organizaciones; se usa :name.',
